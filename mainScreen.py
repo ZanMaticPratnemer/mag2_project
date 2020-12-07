@@ -53,8 +53,11 @@ class Ui_MainWindow(object):
 
         MainWindow.setCentralWidget(self.centralwidget)
 
-        self.screen_layout = QBoxLayout(QBoxLayout.TopToBottom, self.centralwidget)
+        ################
+        #### LAYOUTS ###
+        ################
 
+        self.screen_layout = QBoxLayout(QBoxLayout.TopToBottom, self.centralwidget)
 
         self.control_layout = QBoxLayout(QBoxLayout.LeftToRight)
         self.control_box = QGroupBox("Control")
@@ -63,11 +66,15 @@ class Ui_MainWindow(object):
 
         self.screen_layout.addWidget(self.control_box)
 
+        self.mode_sel_box = QGroupBox("Select selection mode")
         self.mode_sel_layout = QBoxLayout(QBoxLayout.TopToBottom)
-        self.control_layout.addLayout(self.mode_sel_layout)
+        self.mode_sel_box.setLayout(self.mode_sel_layout)
+        self.control_layout.addWidget(self.mode_sel_box)
 
         self.points_layout = QBoxLayout(QBoxLayout.LeftToRight)
-        self.control_layout.addLayout(self.points_layout)
+        self.points_box = QGroupBox("Points")
+        self.points_box.setLayout(self.points_layout)
+        self.control_layout.addWidget(self.points_box)
 
         self.p1_layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.p2_layout = QBoxLayout(QBoxLayout.TopToBottom)
