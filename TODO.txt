@@ -1,0 +1,7 @@
+Implement a polygon selection mode. This will require dinamically changing layouts.
+
+
+Visuals duh...
+
+
+Implement the optimization algorithm
