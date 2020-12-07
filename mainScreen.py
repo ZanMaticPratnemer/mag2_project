@@ -16,6 +16,12 @@ class Ui_MainWindow(object):
         # What we see as proximity when moving points/edges of selection
         self.prox = 3
 
+        # Points used for drawing a polygon
+        self.points = []
+
+        # Keeps track of what items are in self.points_layout
+        self.points_items = []
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowTitle("Satelit")
@@ -50,6 +56,7 @@ class Ui_MainWindow(object):
         self.sel_mode.setFixedSize(QSize(60, 25))
         self.sel_mode.addItem("Rect")
         self.sel_mode.addItem("Poly")
+        self.sel_mode.currentIndexChanged.connect(self.changeSelectionMode)
 
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -79,7 +86,9 @@ class Ui_MainWindow(object):
         self.p1_layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.p2_layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.points_layout.addLayout(self.p1_layout)
+        self.points_items.append(self.p1_layout)
         self.points_layout.addLayout(self.p2_layout)
+        self.points_items.append(self.p2_layout)
 
         self.mode_sel_layout.addWidget(self.sel_mode)
         self.p1_layout.addWidget(self.p1x)
@@ -94,6 +103,9 @@ class Ui_MainWindow(object):
 
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+    ###############
+    ### SIGNALS ###
+    ###############
 
     def mousePressEventRect(self, event):
 
@@ -220,6 +232,18 @@ class Ui_MainWindow(object):
         self.map.setP1(self.p1)
         self.map.setP2(self.p2)
         self.map.update()
+
+    def changeSelectionMode(self, index):
+        if index == 0:
+            for item in self.points_items:
+                self.points_layout.removeItem(item)
+
+            self.points_layout.addLayout(self.p1_layout)
+            self.points_items.append(self.p1_layout)
+            self.points_layout.addLayout(self.p2_layout)
+            self.points_items.append(self.p2_layout)
+        elif index == 1:
+            pass
 
 
 
