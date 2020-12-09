@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QSize
 from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen
-from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox
+from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox, QPushButton
 import sys
 from customWidgets import *
 from customFuncs import *
@@ -15,10 +15,12 @@ class Ui_MainWindow(object):
         self.move_y_p2 = False
 
         # What we see as proximity when moving points/edges of selection
-        self.prox = 3
+        self.prox = 5
 
         # Points used for drawing a polygon
         self.points = []
+        # Index of the poly point being moved
+        self.p_move_i = None
 
         # Keeps track of what items are in self.points_layout
         self.points_items = []
@@ -45,10 +47,8 @@ class Ui_MainWindow(object):
         self.map.mouseMoveEvent = self.mouseMoveEventRect
         self.map.mouseReleaseEvent = self.mouseMoveReleaseRect
 
-        self.p1c = PointControl()
-        self.p1c.addKeyPressEvent(self.pointKeyPressEvent)
-        self.p2c = PointControl()
-        self.p2c.addKeyPressEvent(self.pointKeyPressEvent)
+        self.p1c = PointControl(self.keyPressEventRect)
+        self.p2c = PointControl(self.keyPressEventRect)
 
         self.sel_mode = QComboBox()
         self.sel_mode.setFixedSize(QSize(60, 25))
@@ -56,14 +56,19 @@ class Ui_MainWindow(object):
         self.sel_mode.addItem("Poly")
         self.sel_mode.currentIndexChanged.connect(self.changeSelectionMode)
 
+        self.poly_reset = QPushButton("Clear")
+        self.poly_reset.clicked.connect(self.clearPoly)
+        self.poly_reset.hide()
+        self.poly_reset.setMaximumWidth(60)
+
         MainWindow.setCentralWidget(self.centralwidget)
 
 
      
 
-        ################
-        #### LAYOUTS ###
-        ################
+        ###############
+        ### LAYOUTS ###
+        ###############
 
         self.screen_layout = QBoxLayout(QBoxLayout.TopToBottom, self.centralwidget)
 
@@ -85,10 +90,9 @@ class Ui_MainWindow(object):
         self.control_layout.addWidget(self.points_box)
 
         self.mode_sel_layout.addWidget(self.sel_mode)
+        self.mode_sel_layout.addWidget(self.poly_reset)
         self.points_layout.addWidget(self.p1c)
-        self.points_items.append(self.p1c)
         self.points_layout.addWidget(self.p2c)
-        self.points_items.append(self.p2c)
         self.screen_layout.addWidget(self.map)
 
         
@@ -136,11 +140,9 @@ class Ui_MainWindow(object):
         self.map.setP2(self.p2)
         self.map.update()
 
-        self.p1c.x.setValue(self.p1.x())
-        self.p1c.y.setValue(self.p1.y())
+        self.p1c.setValue(self.p1)
 
-        self.p2c.x.setValue(self.p2.x())
-        self.p2c.y.setValue(self.p2.y())
+        self.p2c.setValue(self.p2)
 
 
     def mouseMoveEventRect(self, event):
@@ -151,28 +153,20 @@ class Ui_MainWindow(object):
         move_p2_v = False
 
         # Mouse near x axis of p1
-        if abs(event.y()-self.p1.y()) < self.prox and ((event.x() > self.p1.x()-self.prox and event.x() < self.p2.x()+self.prox) or (event.x() > self.p2.x()-self.prox and event.x() < self.p1.x()+self.prox)):
+        if abs(event.y()-self.p1.y()) <= self.prox and ((event.x() > self.p1.x()-self.prox and event.x() < self.p2.x()+self.prox) or (event.x() > self.p2.x()-self.prox and event.x() < self.p1.x()+self.prox)):
             move_p1_v = True
         # Mouse near x axis of p2
-        elif abs(event.y()-self.p2.y()) < self.prox and ((event.x() > self.p1.x()-self.prox and event.x() < self.p2.x()+self.prox) or (event.x() > self.p2.x()-self.prox and event.x() < self.p1.x()+self.prox)):
+        elif abs(event.y()-self.p2.y()) <= self.prox and ((event.x() > self.p1.x()-self.prox and event.x() < self.p2.x()+self.prox) or (event.x() > self.p2.x()-self.prox and event.x() < self.p1.x()+self.prox)):
             move_p2_v = True
         # Mouse near y axis of p1
-        if abs(event.x()-self.p1.x()) < self.prox and ((event.y() > self.p1.y()-self.prox and event.y() < self.p2.y()+self.prox) or (event.y() > self.p2.y()-self.prox and event.y() < self.p1.y()+self.prox)):
+        if abs(event.x()-self.p1.x()) <= self.prox and ((event.y() > self.p1.y()-self.prox and event.y() < self.p2.y()+self.prox) or (event.y() > self.p2.y()-self.prox and event.y() < self.p1.y()+self.prox)):
             move_p1_h = True
         # Mouse near y axis of p2
-        elif abs(event.x()-self.p2.x()) < self.prox and ((event.y() > self.p1.y()-self.prox and event.y() < self.p2.y()+self.prox) or (event.y() > self.p2.y()-self.prox and event.y() < self.p1.y()+self.prox)):
+        elif abs(event.x()-self.p2.x()) <= self.prox and ((event.y() > self.p1.y()-self.prox and event.y() < self.p2.y()+self.prox) or (event.y() > self.p2.y()-self.prox and event.y() < self.p1.y()+self.prox)):
             move_p2_h = True
 
-        if (move_p1_v and move_p1_h) or (move_p2_v and move_p2_h):
-            if (self.p1.x() < self.p2.x() and self.p1.y() < self.p2.y()) or (self.p1.x() > self.p2.x() and self.p1.y() > self.p2.y()):
-                self.map.setCursor(Qt.SizeFDiagCursor)
-            else:
-                self.map.setCursor(Qt.SizeBDiagCursor)
-        elif (move_p1_v and move_p2_h) or (move_p2_v and move_p1_h):
-            if (self.p1.x() < self.p2.x() and self.p1.y() < self.p2.y()) or (self.p1.x() > self.p2.x() and self.p1.y() > self.p2.y()):
-                self.map.setCursor(Qt.SizeBDiagCursor)
-            else:
-                self.map.setCursor(Qt.SizeFDiagCursor)
+        if (move_p1_v and move_p2_h) or (move_p2_v and move_p1_h) or (move_p1_v and move_p1_h) or (move_p2_v and move_p2_h):
+            self.map.setCursor(Qt.SizeAllCursor)
         elif move_p1_h or move_p2_h:
             self.map.setCursor(Qt.SizeHorCursor)
         elif move_p1_v or move_p2_v:
@@ -203,11 +197,9 @@ class Ui_MainWindow(object):
             self.map.setP2(self.p2)
             self.map.update()
 
-            self.p1c.x.setValue(self.p1.x())
-            self.p1c.y.setValue(self.p1.y())
+            self.p1c.setValue(self.p1)
 
-            self.p2c.x.setValue(self.p2.x())
-            self.p2c.y.setValue(self.p2.y())
+            self.p2c.setValue(self.p2)
 
     def mouseMoveReleaseRect(self, event):
         self.move_x_p1 = False
@@ -216,35 +208,73 @@ class Ui_MainWindow(object):
         self.move_y_p2 = False
 
     def mousePressEventPoly(self, event):
-        new_p = event.pos()
+        if not self.map.poly_complete:
+            new_p = event.pos()
+            if len(self.points) > 3:
+                # First check if polygon is complete
+                if euclDist(self.points[0], new_p) <= self.prox:
+                    self.map.poly_complete = True
+                    self.map.setPoints(self.points)
+                    self.map.update()
+                    return
+                # Else for intersections of the new line segment
+                else:
+                    for i in range(len(self.points) - 2):
+                        if intersect(self.points[i], self.points[i+1], self.points[-1], new_p):
+                            # TODO: (optional) create a popup error message
+                            return
 
-        
-        
-        if len(self.points) > 3:
-            # First check if polygon is complete
-            if euclDist(self.points[0], new_p) <= self.prox:
-                new_p = self.points[0]
-            # Else for intersections of the new line segment
-            else:
-                for i in range(len(self.points) - 2):
-                    if intersect(self.points[i], self.points[i+1], self.points[-1], new_p):
-                        # TODO: (optional) create a popup error message
-                        return
+            # If no intersections were found, add the new point
+            self.points.append(new_p)
+            self.map.setPoints(self.points)
 
-        # If no intersections were found, add the new point
-        self.points.append(new_p)
-        self.map.setPoints(self.points)
+            self.map.update()
 
-        self.map.update()
+            new_widget = PointControl(self.keyPressEventPoly)
+            new_widget.setValue(new_p)
+            self.points_items.append(new_widget)
+            self.points_layout.addWidget(new_widget)
+        else:
+            c_pos = event.pos()
+            for i, p in enumerate(self.points):
+                if euclDist(c_pos, p) <= self.prox:
+                    self.p_move_i = i
 
 
     def mouseMoveEventPoly(self, event):
-        pass
+        pos = event.pos()
+
+        if self.map.poly_complete:
+            norm_cursor = True
+            for p in self.points:
+                if euclDist(pos, p) <= self.prox:
+                    self.map.setCursor(Qt.SizeAllCursor)
+                    norm_cursor = False
+            if norm_cursor:
+                self.map.setCursor(Qt.ArrowCursor)
+        else:
+            self.map.setPoints(self.points + [pos])
+            self.map.update()
+
+        if self.p_move_i != None:
+            self.points[self.p_move_i] = pos
+            self.points_items[self.p_move_i].setValue(pos)
+            self.map.setPoints(self.points)
+            self.map.update()
 
     def mouseReleaseEventPoly(self, event):
-        pass
+        self.p_move_i = None
 
-    def pointKeyPressEvent(self, event):
+    def clearPoly(self):
+        self.points = []
+        for item in self.points_items:
+            item.deleteLater()
+        self.points_items = []
+        self.points = []
+        self.map.points = []
+        self.map.poly_complete = False
+
+    def keyPressEventRect(self, event):
         self.p1.setX(self.p1c.x.value())
         self.p1.setY(self.p1c.y.value())
         self.p2.setX(self.p2c.x.value())
@@ -254,17 +284,20 @@ class Ui_MainWindow(object):
         self.map.setP2(self.p2)
         self.map.update()
 
+    def keyPressEventPoly(self, event):
+        for i, pc in enumerate(self.points_items):
+            self.points[i] = pc.getPoint()
+        self.map.setPoints(self.points)
+        self.map.update()
+
     def changeSelectionMode(self, index):
         if index == 0:
             for item in self.points_items:
-                item.deleteLater()
-            self.points_items = []
-            self.points = []
+                item.hide()
+            self.poly_reset.hide()
 
             self.p1c.show()
-            self.points_items.append(self.p1c)
             self.p2c.show()
-            self.points_items.append(self.p2c)
 
             self.map.mousePressEvent = self.mousePressEventRect
             self.map.mouseMoveEvent = self.mouseMoveEventRect
@@ -273,13 +306,11 @@ class Ui_MainWindow(object):
             self.mode_name = "rect"
             self.map.setRectMode()
         elif index == 1:
+            self.p1c.hide()
+            self.p2c.hide()
             for item in self.points_items:
-                item.hide()
-            self.points_items = []
-
-            for p in self.points:
-                self.points_items.append(p)
-                self.points_layout.addWidget(p)
+                item.show()
+            self.poly_reset.show()
 
             self.map.mousePressEvent = self.mousePressEventPoly
             self.map.mouseMoveEvent = self.mouseMoveEventPoly
@@ -287,6 +318,8 @@ class Ui_MainWindow(object):
 
             self.mode_name = "poly"
             self.map.setPolyMode()
+
+        self.map.update()
 
 
 

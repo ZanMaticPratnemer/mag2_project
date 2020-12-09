@@ -25,6 +25,8 @@ class Map(QWidget):
 
         self.setRectMode()
 
+        self.poly_complete = False
+
     def paintRect(self, event):
         painter = QPainter(self)
         painter.drawPixmap(self.rect(), self.image)
@@ -50,16 +52,17 @@ class Map(QWidget):
         poly = QPolygon()
         for p in self.points:
             poly.append(p)
+            if p is self.points[-1] and not self.poly_complete:
+                continue
             painter.drawEllipse(p, 3, 3)
 
         
         painter.setPen(self.pen_sel)
         painter.setBrush(self.br_sel)
-        if self.points[0] != self.points[-1]:
-            painter.drawPolyline(poly)
-        elif self.points[0] == self.points[-1]:
-            poly.remove(len(self.points)-1)
+        if self.poly_complete:
             painter.drawPolygon(poly)
+        else:
+            painter.drawPolyline(poly)
 
     def setP1(self, p):
         self.p1_rect = p
@@ -94,7 +97,7 @@ class CoordControl(QSpinBox):
         self.addedKeyEvent(event)
 
 class PointControl(QWidget):
-    def __init__(self, *args, **kw):
+    def __init__(self,keyEvent ,*args, **kw):
         super(PointControl, self).__init__(*args, **kw)
 
         self.setFocusPolicy(Qt.StrongFocus)
@@ -110,6 +113,12 @@ class PointControl(QWidget):
         self.y.setGeometry(0, 35, 60, 25)
         self.y.setRange(0, 820)
 
-    def addKeyPressEvent(self, func):
-        self.x.addKeyPressEvent(func)
-        self.y.addKeyPressEvent(func)
+        self.x.addKeyPressEvent(keyEvent)
+        self.y.addKeyPressEvent(keyEvent)
+
+    def setValue(self, p):
+        self.x.setValue(p.x())
+        self.y.setValue(p.y())
+
+    def getPoint(self):
+        return QPoint(self.x.value(), self.y.value())
