@@ -44,18 +44,21 @@ class Map(QWidget):
         painter = QPainter(self)
         painter.drawPixmap(self.rect(), self.image)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(self.br_dot)
+        painter.setPen(self.pen_dot)
 
         poly = QPolygon()
         for p in self.points:
             poly.append(p)
+            painter.drawEllipse(p, 3, 3)
 
+        
+        painter.setPen(self.pen_sel)
+        painter.setBrush(self.br_sel)
         if self.points[0] != self.points[-1]:
-            painter.setPen(self.pen_sel)
             painter.drawPolyline(poly)
         elif self.points[0] == self.points[-1]:
             poly.remove(len(self.points)-1)
-            painter.setBrush(self.br_sel)
-            painter.setPen(self.pen_sel)
             painter.drawPolygon(poly)
 
     def setP1(self, p):
