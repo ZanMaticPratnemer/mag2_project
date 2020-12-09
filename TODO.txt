@@ -1,4 +1,4 @@
-Implement a polygon selection mode. This will require dinamically changing layouts.
+Polygon selection mode implemented, dynamicaly add ControlPoint widgets for all points.
 
 
 Visuals duh...
