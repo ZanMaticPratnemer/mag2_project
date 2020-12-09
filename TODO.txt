@@ -1,4 +1,4 @@
-Polygon selection mode implemented, dynamicaly add ControlPoint widgets for all points.
+Make saved selections editable
 
 
 Visuals duh...
