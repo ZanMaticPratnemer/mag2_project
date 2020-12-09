@@ -50,16 +50,10 @@ class Map(QWidget):
         pass
         
 class CoordControl(QSpinBox):
-    def __init__(self, coord, *args, **kw):
+    def __init__(self, *args, **kw):
         super(CoordControl, self).__init__(*args, **kw)
-        self.p_disp_size = QSize(60, 25)
-        self.setFixedSize(self.p_disp_size)
         self.setFocusPolicy(Qt.StrongFocus)
-        self.addedKeyPressEvent = None
-        if coord == 'x':
-            self.setRange(0, 1075)
-        elif coord == 'y':
-            self.setRange(0, 820)
+        self.addedKeyEvent = None
     
     def addKeyPressEvent(self, func):
         self.addedKeyEvent = func
@@ -74,17 +68,21 @@ class CoordControl(QSpinBox):
 
 class PointControl(QWidget):
     def __init__(self, *args, **kw):
-        super(CoordControl1, self).__init__(*args, **kw)
+        super(PointControl, self).__init__(*args, **kw)
+
+        self.setFocusPolicy(Qt.StrongFocus)
 
         self.p_disp_size = QSize(60, 60)
         self.setFixedSize(self.p_disp_size)
 
-        self.x = CoordControl('x', self)
+        self.x = CoordControl(self)
         self.x.setGeometry(0, 0, 60, 25)
         self.x.setRange(0, 1075)
-        self.x.setFocusPolicy(Qt.StrongFocus)
 
-        self.y = CoordControl('y', self)
+        self.y = CoordControl(self)
         self.y.setGeometry(0, 35, 60, 25)
         self.y.setRange(0, 820)
-        self.y.setFocusPolicy(Qt.StrongFocus)
+
+    def addKeyPressEvent(self, func):
+        self.x.addKeyPressEvent(func)
+        self.y.addKeyPressEvent(func)

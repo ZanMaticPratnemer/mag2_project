@@ -44,19 +44,10 @@ class Ui_MainWindow(object):
         self.map.mouseMoveEvent = self.mouseMoveEventRect
         self.map.mouseReleaseEvent = self.mouseMoveReleaseRect
 
-        self.p1x = CoordControl('x')
-        self.p1y = CoordControl('y')
-        self.p1x.addKeyPressEvent(self.pointKeyPressEvent)
-        self.p1y.addKeyPressEvent(self.pointKeyPressEvent)
-        self.points_items.append(self.p1x)
-        self.points_items.append(self.p1y)
-
-        self.p2x = CoordControl('x')
-        self.p2y = CoordControl('y')
-        self.p2x.addKeyPressEvent(self.pointKeyPressEvent)
-        self.p2y.addKeyPressEvent(self.pointKeyPressEvent)
-        self.points_items.append(self.p2x)
-        self.points_items.append(self.p2y)
+        self.p1c = PointControl()
+        self.p1c.addKeyPressEvent(self.pointKeyPressEvent)
+        self.p2c = PointControl()
+        self.p2c.addKeyPressEvent(self.pointKeyPressEvent)
 
         self.sel_mode = QComboBox()
         self.sel_mode.setFixedSize(QSize(60, 25))
@@ -67,9 +58,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
 
-        ## TEST
-        self.test = PointControl()
-        self.test.addKeyPressEvent(self.pointKeyPressEvent)
+     
 
         ################
         #### LAYOUTS ###
@@ -94,17 +83,11 @@ class Ui_MainWindow(object):
         self.points_box.setLayout(self.points_layout)
         self.control_layout.addWidget(self.points_box)
 
-        self.p1_layout = QBoxLayout(QBoxLayout.TopToBottom)
-        self.p2_layout = QBoxLayout(QBoxLayout.TopToBottom)
-        self.points_layout.addLayout(self.p1_layout)
-        self.points_layout.addLayout(self.p2_layout)
-        self.points_layout.addWidget(self.test)
-
         self.mode_sel_layout.addWidget(self.sel_mode)
-        self.p1_layout.addWidget(self.p1x)
-        self.p1_layout.addWidget(self.p1y)
-        self.p2_layout.addWidget(self.p2x)
-        self.p2_layout.addWidget(self.p2y)
+        self.points_layout.addWidget(self.p1c)
+        self.points_items.append(self.p1c)
+        self.points_layout.addWidget(self.p2c)
+        self.points_items.append(self.p2c)
         self.screen_layout.addWidget(self.map)
 
         
@@ -152,15 +135,11 @@ class Ui_MainWindow(object):
         self.map.setP2(self.p2)
         self.map.update()
 
-        self.p1x.setValue(self.p1.x())
-        self.p1y.setValue(self.p1.y())
-        self.p1x.adjustSize()
-        self.p1y.adjustSize()
+        self.p1c.x.setValue(self.p1.x())
+        self.p1c.y.setValue(self.p1.y())
 
-        self.p2x.setValue(self.p2.x())
-        self.p2y.setValue(self.p2.y())
-        self.p2x.adjustSize()
-        self.p2y.adjustSize()
+        self.p2c.x.setValue(self.p2.x())
+        self.p2c.y.setValue(self.p2.y())
 
 
     def mouseMoveEventRect(self, event):
@@ -223,15 +202,11 @@ class Ui_MainWindow(object):
             self.map.setP2(self.p2)
             self.map.update()
 
-            self.p1x.setValue(self.p1.x())
-            self.p1y.setValue(self.p1.y())
-            self.p1x.adjustSize()
-            self.p1y.adjustSize()
+            self.p1c.x.setValue(self.p1.x())
+            self.p1c.y.setValue(self.p1.y())
 
-            self.p2x.setValue(self.p2.x())
-            self.p2y.setValue(self.p2.y())
-            self.p2x.adjustSize()
-            self.p2y.adjustSize()
+            self.p2c.x.setValue(self.p2.x())
+            self.p2c.y.setValue(self.p2.y())
 
     def mouseMoveReleaseRect(self, event):
         self.move_x_p1 = False
@@ -239,11 +214,25 @@ class Ui_MainWindow(object):
         self.move_y_p1 = False
         self.move_y_p2 = False
 
+    def mousePressEventPoly(self, event):
+        if len(self.points) > 3:
+            for i in range(len(self.points)):
+
+
+        self.points.append(event.pos())
+
+
+    def mouseMoveEventPoly(self, event):
+        pass
+
+    def mouseReleaseEventPoly(self, event):
+        pass
+
     def pointKeyPressEvent(self, event):
-        self.p1.setX(self.p1x.value())
-        self.p1.setY(self.p1y.value())
-        self.p2.setX(self.p2x.value())
-        self.p2.setY(self.p2y.value())
+        self.p1.setX(self.p1c.x.value())
+        self.p1.setY(self.p1c.y.value())
+        self.p2.setX(self.p2c.x.value())
+        self.p2.setY(self.p2c.y.value())
 
         self.map.setP1(self.p1)
         self.map.setP2(self.p2)
@@ -254,15 +243,16 @@ class Ui_MainWindow(object):
             for item in self.points_items:
                 item.deleteLater()
             self.points_items = []
+            self.points = []
 
-            self.p1x.show()
-            self.p1y.show()
-            self.points_items.append(self.p1x)
-            self.points_items.append(self.p1y)
-            self.p2x.show()
-            self.p2y.show()
-            self.points_items.append(self.p2x)
-            self.points_items.append(self.p2y)
+            self.p1c.show()
+            self.points_items.append(self.p1c)
+            self.p2c.show()
+            self.points_items.append(self.p2c)
+
+            self.map.mousePressEvent = self.mousePressEventRect
+            self.map.mouseMoveEvent = self.mouseMoveEventRect
+            self.map.mouseReleaseEvent = self.mouseMoveReleaseRect
 
             self.mode_name = "rect"
         elif index == 1:
@@ -270,11 +260,13 @@ class Ui_MainWindow(object):
                 item.hide()
             self.points_items = []
 
-            self.points.append(PointControl())
-
             for p in self.points:
                 self.points_items.append(p)
                 self.points_layout.addWidget(p)
+
+            self.map.mousePressEvent = self.mousePressEventPoly
+            self.map.mouseMoveEvent = self.mouseMoveEventPoly
+            self.map.mouseReleaseEvent = self.mouseReleaseEventPoly
 
             self.mode_name = "poly"
 
@@ -291,3 +283,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
