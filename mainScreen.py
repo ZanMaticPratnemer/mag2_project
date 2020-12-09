@@ -4,6 +4,7 @@ from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen
 from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox
 import sys
 from customWidgets import *
+from customFuncs import *
 
 
 class Ui_MainWindow(object):
@@ -215,11 +216,26 @@ class Ui_MainWindow(object):
         self.move_y_p2 = False
 
     def mousePressEventPoly(self, event):
+        new_p = event.pos()
+
+        
+        
         if len(self.points) > 3:
-            for i in range(len(self.points)):
+            # First check if polygon is complete
+            if euclDist(self.points[0], new_p) <= self.prox:
+                new_p = self.points[0]
+            # Else for intersections of the new line segment
+            else:
+                for i in range(len(self.points) - 2):
+                    if intersect(self.points[i], self.points[i+1], self.points[-1], new_p):
+                        # TODO: (optional) create a popup error message
+                        return
 
+        # If no intersections were found, add the new point
+        self.points.append(new_p)
+        self.map.setPoints(self.points)
 
-        self.points.append(event.pos())
+        self.map.update()
 
 
     def mouseMoveEventPoly(self, event):
@@ -255,6 +271,7 @@ class Ui_MainWindow(object):
             self.map.mouseReleaseEvent = self.mouseMoveReleaseRect
 
             self.mode_name = "rect"
+            self.map.setRectMode()
         elif index == 1:
             for item in self.points_items:
                 item.hide()
@@ -269,6 +286,7 @@ class Ui_MainWindow(object):
             self.map.mouseReleaseEvent = self.mouseReleaseEventPoly
 
             self.mode_name = "poly"
+            self.map.setPolyMode()
 
 
 
@@ -283,4 +301,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

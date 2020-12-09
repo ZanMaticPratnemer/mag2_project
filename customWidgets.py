@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QPoint, QSize
-from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen
+from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen, QPolygon
 from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox, QWidget
 
 class Map(QWidget):
@@ -17,9 +17,13 @@ class Map(QWidget):
         self.p1_rect = QPoint(-3, -3)
         self.p2_rect = QPoint(-3, -3)
 
+        self.points = []
+
         self.paintEvent = self.paintRect
 
         self.setMouseTracking(True)
+
+        self.setRectMode()
 
     def paintRect(self, event):
         painter = QPainter(self)
@@ -36,18 +40,38 @@ class Map(QWidget):
         painter.drawEllipse(self.p1_rect, 3, 3)
         painter.drawEllipse(self.p2_rect, 3, 3)
 
+    def paintPoly(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(self.rect(), self.image)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        poly = QPolygon()
+        for p in self.points:
+            poly.append(p)
+
+        if self.points[0] != self.points[-1]:
+            painter.setPen(self.pen_sel)
+            painter.drawPolyline(poly)
+        elif self.points[0] == self.points[-1]:
+            poly.remove(len(self.points)-1)
+            painter.setBrush(self.br_sel)
+            painter.setPen(self.pen_sel)
+            painter.drawPolygon(poly)
+
     def setP1(self, p):
         self.p1_rect = p
 
     def setP2(self, p):
         self.p2_rect = p
 
+    def setPoints(self, points):
+        self.points = points
+
     def setRectMode(self):
         self.paintEvent = self.paintRect
 
     def setPolyMode(self):
-        # self.paintEvent = self.paintPoly
-        pass
+        self.paintEvent = self.paintPoly
         
 class CoordControl(QSpinBox):
     def __init__(self, *args, **kw):
