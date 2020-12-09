@@ -1,9 +1,9 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QPoint, QSize
 from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen
-from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox
+from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox, QWidget
 
-class Map(QtWidgets.QWidget):
+class Map(QWidget):
     def __init__(self, *args, **kw):
         super(Map, self).__init__(*args, **kw)
         self.image = QPixmap("si-04.jpg")
@@ -71,3 +71,20 @@ class CoordControl(QSpinBox):
     def mouseReleaseEvent(self, event):
         super(CoordControl, self).mouseReleaseEvent(event)
         self.addedKeyEvent(event)
+
+class PointControl(QWidget):
+    def __init__(self, *args, **kw):
+        super(CoordControl1, self).__init__(*args, **kw)
+
+        self.p_disp_size = QSize(60, 60)
+        self.setFixedSize(self.p_disp_size)
+
+        self.x = CoordControl('x', self)
+        self.x.setGeometry(0, 0, 60, 25)
+        self.x.setRange(0, 1075)
+        self.x.setFocusPolicy(Qt.StrongFocus)
+
+        self.y = CoordControl('y', self)
+        self.y.setGeometry(0, 35, 60, 25)
+        self.y.setRange(0, 820)
+        self.y.setFocusPolicy(Qt.StrongFocus)

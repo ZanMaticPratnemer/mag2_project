@@ -22,6 +22,8 @@ class Ui_MainWindow(object):
         # Keeps track of what items are in self.points_layout
         self.points_items = []
 
+        self.mode_name = "rect"
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowTitle("Satelit")
@@ -46,11 +48,15 @@ class Ui_MainWindow(object):
         self.p1y = CoordControl('y')
         self.p1x.addKeyPressEvent(self.pointKeyPressEvent)
         self.p1y.addKeyPressEvent(self.pointKeyPressEvent)
+        self.points_items.append(self.p1x)
+        self.points_items.append(self.p1y)
 
         self.p2x = CoordControl('x')
         self.p2y = CoordControl('y')
         self.p2x.addKeyPressEvent(self.pointKeyPressEvent)
         self.p2y.addKeyPressEvent(self.pointKeyPressEvent)
+        self.points_items.append(self.p2x)
+        self.points_items.append(self.p2y)
 
         self.sel_mode = QComboBox()
         self.sel_mode.setFixedSize(QSize(60, 25))
@@ -59,6 +65,11 @@ class Ui_MainWindow(object):
         self.sel_mode.currentIndexChanged.connect(self.changeSelectionMode)
 
         MainWindow.setCentralWidget(self.centralwidget)
+
+
+        ## TEST
+        self.test = PointControl()
+        self.test.addKeyPressEvent(self.pointKeyPressEvent)
 
         ################
         #### LAYOUTS ###
@@ -86,9 +97,8 @@ class Ui_MainWindow(object):
         self.p1_layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.p2_layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.points_layout.addLayout(self.p1_layout)
-        self.points_items.append(self.p1_layout)
         self.points_layout.addLayout(self.p2_layout)
-        self.points_items.append(self.p2_layout)
+        self.points_layout.addWidget(self.test)
 
         self.mode_sel_layout.addWidget(self.sel_mode)
         self.p1_layout.addWidget(self.p1x)
@@ -242,14 +252,31 @@ class Ui_MainWindow(object):
     def changeSelectionMode(self, index):
         if index == 0:
             for item in self.points_items:
-                self.points_layout.removeItem(item)
+                item.deleteLater()
+            self.points_items = []
 
-            self.points_layout.addLayout(self.p1_layout)
-            self.points_items.append(self.p1_layout)
-            self.points_layout.addLayout(self.p2_layout)
-            self.points_items.append(self.p2_layout)
+            self.p1x.show()
+            self.p1y.show()
+            self.points_items.append(self.p1x)
+            self.points_items.append(self.p1y)
+            self.p2x.show()
+            self.p2y.show()
+            self.points_items.append(self.p2x)
+            self.points_items.append(self.p2y)
+
+            self.mode_name = "rect"
         elif index == 1:
-            pass
+            for item in self.points_items:
+                item.hide()
+            self.points_items = []
+
+            self.points.append(PointControl())
+
+            for p in self.points:
+                self.points_items.append(p)
+                self.points_layout.addWidget(p)
+
+            self.mode_name = "poly"
 
 
 
