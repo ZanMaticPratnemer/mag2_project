@@ -174,9 +174,15 @@ class Ui_MainWindow(object):
             move_p2_h = True
 
         if (move_p1_v and move_p1_h) or (move_p2_v and move_p2_h):
-            self.map.setCursor(Qt.SizeFDiagCursor)
+            if (self.p1.x() < self.p2.x() and self.p1.y() < self.p2.y()) or (self.p1.x() > self.p2.x() and self.p1.y() > self.p2.y()):
+                self.map.setCursor(Qt.SizeFDiagCursor)
+            else:
+                self.map.setCursor(Qt.SizeBDiagCursor)
         elif (move_p1_v and move_p2_h) or (move_p2_v and move_p1_h):
-            self.map.setCursor(Qt.SizeBDiagCursor)
+            if (self.p1.x() < self.p2.x() and self.p1.y() < self.p2.y()) or (self.p1.x() > self.p2.x() and self.p1.y() > self.p2.y()):
+                self.map.setCursor(Qt.SizeBDiagCursor)
+            else:
+                self.map.setCursor(Qt.SizeFDiagCursor)
         elif move_p1_h or move_p2_h:
             self.map.setCursor(Qt.SizeHorCursor)
         elif move_p1_v or move_p2_v:
