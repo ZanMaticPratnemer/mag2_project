@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QSize
 from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen
-from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox, QPushButton
+from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox, QPushButton, QSizePolicy, QCheckBox
 import sys
 from customWidgets import *
 from customFuncs import *
@@ -26,6 +26,8 @@ class Ui_MainWindow(object):
         self.points_items = []
 
         self.mode_name = "rect"
+
+        self.saved_selections = []
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -61,6 +63,25 @@ class Ui_MainWindow(object):
         self.poly_reset.hide()
         self.poly_reset.setMaximumWidth(60)
 
+        sp = QSizePolicy()
+        sp.setHorizontalPolicy(QSizePolicy.Minimum)
+
+        self.save_selection = QPushButton("Save current")
+        self.save_selection.setMaximumSize(self.save_selection.sizeHint())
+        self.save_selection.setSizePolicy(sp)
+        self.save_selection.clicked.connect(self.saveSelection)
+
+        self.clear_selections = QPushButton("Clear all")
+        self.clear_selections.setMaximumSize(self.clear_selections.sizeHint())
+        self.clear_selections.setSizePolicy(sp)
+        self.clear_selections.clicked.connect(self.clearSelections)
+
+        self.display_selections = QCheckBox("Display selections")
+        self.display_selections.setMaximumSize(self.display_selections.sizeHint())
+        self.display_selections.setSizePolicy(sp)
+        self.display_selections.stateChanged.connect(self.displaySelection)
+
+
         MainWindow.setCentralWidget(self.centralwidget)
 
 
@@ -74,10 +95,15 @@ class Ui_MainWindow(object):
 
         self.control_layout = QBoxLayout(QBoxLayout.LeftToRight)
         self.control_box = QGroupBox("Control")
-        self.control_box.setMaximumHeight(150)
+        self.control_box.setMaximumHeight(200)
         self.control_box.setLayout(self.control_layout)
 
         self.screen_layout.addWidget(self.control_box)
+
+        self.selections_box = QGroupBox("Selection management")
+        self.selections_layout = QBoxLayout(QBoxLayout.TopToBottom)
+        self.selections_box.setLayout(self.selections_layout)
+        self.control_layout.addWidget(self.selections_box)
 
         self.mode_sel_box = QGroupBox("Select selection mode")
         self.mode_sel_layout = QBoxLayout(QBoxLayout.TopToBottom)
@@ -89,11 +115,15 @@ class Ui_MainWindow(object):
         self.points_box.setLayout(self.points_layout)
         self.control_layout.addWidget(self.points_box)
 
+
         self.mode_sel_layout.addWidget(self.sel_mode)
         self.mode_sel_layout.addWidget(self.poly_reset)
         self.points_layout.addWidget(self.p1c)
         self.points_layout.addWidget(self.p2c)
         self.screen_layout.addWidget(self.map)
+        self.selections_layout.addWidget(self.save_selection)
+        self.selections_layout.addWidget(self.clear_selections)
+        self.selections_layout.addWidget(self.display_selections)
 
         
         
@@ -319,6 +349,26 @@ class Ui_MainWindow(object):
             self.mode_name = "poly"
             self.map.setPolyMode()
 
+        self.map.update()
+
+    def saveSelection(self):
+        if self.mode_name == "rect":
+            self.saved_selections.append([self.mode_name] + [self.p1] + [self.p2])
+        else:
+            self.saved_selections.append([self.mode_name] + self.points)
+
+        self.map.update()
+
+    def clearSelections(self):
+        self.saved_selections = []
+        self.map.update()
+
+    def displaySelection(self, s):
+        if s == 0:
+            self.map.setDisplaySelections(False)
+        else:
+            self.map.setSelections(self.saved_selections)
+            self.map.setDisplaySelections(True)
         self.map.update()
 
 

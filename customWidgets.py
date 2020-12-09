@@ -23,17 +23,42 @@ class Map(QWidget):
 
         self.points = []
 
-        self.paintEvent = self.paintRect
-
         self.setMouseTracking(True)
 
         self.setRectMode()
 
         self.poly_complete = False
 
-    def paintRect(self, event):
+        self.selections = []
+        self.display_selections = False
+
+        self.paintCurSel = self.paintRect
+
+    def paintEvent(self, event):
         painter = QPainter(self)
         painter.drawPixmap(self.rect(), self.image)
+
+        if self.display_selections:
+            self.paintSelections(painter)
+        self.paintCurSel(painter)
+
+    def paintSelections(self, painter):
+        painter.setBrush(self.br_sel)
+        painter.setPen(self.pen_sel)
+
+        for sel in self.selections:
+            if sel[0] == "rect":
+                painter.drawRect(sel[1].x(), sel[1].y(), sel[2].x()-sel[1].x(), sel[2].y()-sel[1].y())
+            else:
+                poly = QPolygon()
+                for p in sel:
+                    if p == "poly":
+                        continue
+                    poly.append(p)
+                painter.drawPolygon(poly)
+
+
+    def paintRect(self, painter):
 
         # Draw selection area
         painter.setBrush(self.br_sel)
@@ -46,9 +71,7 @@ class Map(QWidget):
         painter.drawEllipse(self.p1_rect, 3, 3)
         painter.drawEllipse(self.p2_rect, 3, 3)
 
-    def paintPoly(self, event):
-        painter = QPainter(self)
-        painter.drawPixmap(self.rect(), self.image)
+    def paintPoly(self, painter):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setBrush(self.br_dot)
         painter.setPen(self.pen_dot)
@@ -78,10 +101,16 @@ class Map(QWidget):
         self.points = points
 
     def setRectMode(self):
-        self.paintEvent = self.paintRect
+        self.paintCurSel = self.paintRect
 
     def setPolyMode(self):
-        self.paintEvent = self.paintPoly
+        self.paintCurSel = self.paintPoly
+
+    def setSelections(self, sel):
+        self.selections = sel
+
+    def setDisplaySelections(self, b):
+        self.display_selections = b
         
 class CoordControl(QSpinBox):
     def __init__(self, *args, **kw):
