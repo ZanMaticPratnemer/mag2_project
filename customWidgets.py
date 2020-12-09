@@ -3,10 +3,14 @@ from PyQt5.QtCore import Qt, QPoint, QSize
 from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen, QPolygon
 from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox, QWidget
 
+map_height = 1125
+map_width = 1500
+
 class Map(QWidget):
     def __init__(self, *args, **kw):
         super(Map, self).__init__(*args, **kw)
         self.image = QPixmap("si-04.jpg")
+        self.setFixedSize(map_width, map_height)
 
         self.br_sel = QBrush(QtGui.QColor(10, 10, 150, 40))
         self.pen_sel = QPen(QtGui.QColor(10, 10, 100), 1)
@@ -107,11 +111,11 @@ class PointControl(QWidget):
 
         self.x = CoordControl(self)
         self.x.setGeometry(0, 0, 60, 25)
-        self.x.setRange(0, 1075)
+        self.x.setRange(0, map_width)
 
         self.y = CoordControl(self)
         self.y.setGeometry(0, 35, 60, 25)
-        self.y.setRange(0, 820)
+        self.y.setRange(0, map_height)
 
         self.x.addKeyPressEvent(keyEvent)
         self.y.addKeyPressEvent(keyEvent)
