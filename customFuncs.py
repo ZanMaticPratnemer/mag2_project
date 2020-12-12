@@ -21,3 +21,19 @@ def angleToWidth(gamma, alpha, h):
     b = l * np.sin(alpha)/np.sin(phi)
 
     return [c, a + b]
+
+# Get input of multiple vectors
+# Output the same number of vectors but with only the lowest and the highest element of input vectors
+def findOuter(vectors):
+    out = []
+    for vector in vectors:
+        min_e = np.inf
+        max_e = - np.inf
+        for p in vector:
+            if p < min_e:
+                min_e = p
+            elif p > max_e:
+                max_e = p
+        out.append(np.array([min_e, max_e]))
+
+    return out

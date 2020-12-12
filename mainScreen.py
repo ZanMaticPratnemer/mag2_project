@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGr
 import sys
 from customWidgets import *
 from customFuncs import *
+from optimisation import *
 
 
 class Ui_MainWindow(object):
@@ -399,8 +400,7 @@ class Ui_MainWindow(object):
         self.map.update()
 
     def getConfig(self):
-        print(self.saved_selections)
-        #flights = optimisation(self.saved_selections[:][1], th, f, h, alpha/2, gamma)
+        params = prepParameters(self.saved_selections[:][1], th, f, h, alpha/2, gamma)
 
 
 
