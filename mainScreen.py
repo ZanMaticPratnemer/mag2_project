@@ -17,6 +17,9 @@ class Ui_MainWindow(object):
         # What we see as proximity when moving points/edges of selection
         self.prox = 5
 
+        self.p1 = QPoint(0, 0)
+        self.p2 = QPoint(0, 0)
+
         # Points used for drawing a polygon
         self.points = []
         # Index of the poly point being moved
@@ -36,9 +39,9 @@ class Ui_MainWindow(object):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
-        self.p1 = QPoint(0, 0)
-        self.p2 = QPoint(0, 0)
-
+        ###############
+        ### Widgets ###
+        ###############
 
         self.map = Map()
         self.map.setEnabled(True)
@@ -81,6 +84,11 @@ class Ui_MainWindow(object):
         self.display_selections.setSizePolicy(sp)
         self.display_selections.stateChanged.connect(self.displaySelection)
 
+        self.run_opt = QPushButton("Optimise")
+        self.run_opt.setMaximumSize(self.save_selection.sizeHint())
+        self.run_opt.setSizePolicy(sp)
+        self.run_opt.clicked.connect(self.getConfig)
+
 
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -105,6 +113,11 @@ class Ui_MainWindow(object):
         self.selections_box.setLayout(self.selections_layout)
         self.control_layout.addWidget(self.selections_box)
 
+        self.opt_box = QGroupBox("Optimisation")
+        self.opt_layout = QBoxLayout(QBoxLayout.TopToBottom)
+        self.opt_box.setLayout(self.opt_layout)
+        self.control_layout.addWidget(self.opt_box)
+
         self.mode_sel_box = QGroupBox("Select selection mode")
         self.mode_sel_layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.mode_sel_box.setLayout(self.mode_sel_layout)
@@ -118,6 +131,7 @@ class Ui_MainWindow(object):
 
         self.mode_sel_layout.addWidget(self.sel_mode)
         self.mode_sel_layout.addWidget(self.poly_reset)
+        self.opt_layout.addWidget(self.run_opt)
         self.points_layout.addWidget(self.p1c)
         self.points_layout.addWidget(self.p2c)
         self.screen_layout.addWidget(self.map)
@@ -303,6 +317,7 @@ class Ui_MainWindow(object):
         self.points = []
         self.map.points = []
         self.map.poly_complete = False
+        self.map.update()
 
     def keyPressEventRect(self, event):
         self.p1.setX(self.p1c.x.value())
@@ -353,14 +368,17 @@ class Ui_MainWindow(object):
 
     def saveSelection(self):
         if self.mode_name == "rect":
-            self.saved_selections.append([self.mode_name] + [self.p1] + [self.p2])
+            self.saved_selections.append([self.p1] + [QPoint(self.p1.x(), self.p2.y())] + [self.p2] + [QPoint(self.p2.x(), self.p1.y())])
+            self.map.setSelections(self.saved_selections)
+            self.clearRect()
         else:
-            self.saved_selections.append([self.mode_name] + self.points)
-
-        self.map.update()
+            self.saved_selections.append(self.points)
+            self.map.setSelections(self.saved_selections)
+            self.clearPoly()
 
     def clearSelections(self):
         self.saved_selections = []
+        self.map.setSelections([])
         self.map.update()
 
     def displaySelection(self, s):
@@ -370,6 +388,20 @@ class Ui_MainWindow(object):
             self.map.setSelections(self.saved_selections)
             self.map.setDisplaySelections(True)
         self.map.update()
+
+    def clearRect(self):
+        self.p1 = QPoint(-5, -5)
+        self.p2 = QPoint(-5, -5)
+        self.p1c.setValue(self.p1)
+        self.p2c.setValue(self.p2)
+        self.map.setP1(self.p1)
+        self.map.setP2(self.p2)
+        self.map.update()
+
+    def getConfig(self):
+        print(self.saved_selections)
+        #flights = optimisation(self.saved_selections[:][1], th, f, h, alpha/2, gamma)
+
 
 
 

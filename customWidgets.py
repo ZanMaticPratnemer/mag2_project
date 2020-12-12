@@ -18,6 +18,9 @@ class Map(QWidget):
         self.br_dot = QBrush(QtGui.QColor(0, 0, 0))
         self.pen_dot = QPen(QtGui.QColor(0, 0, 0))
 
+        self.br_saved = QBrush(QtGui.QColor(10, 10, 150, 10))
+        self.pen_saved = QPen(QtGui.QColor(10, 10, 100), 0)
+
         self.p1_rect = QPoint(-3, -3)
         self.p2_rect = QPoint(-3, -3)
 
@@ -43,19 +46,14 @@ class Map(QWidget):
         self.paintCurSel(painter)
 
     def paintSelections(self, painter):
-        painter.setBrush(self.br_sel)
-        painter.setPen(self.pen_sel)
+        painter.setBrush(self.br_saved)
+        painter.setPen(self.pen_saved)
 
         for sel in self.selections:
-            if sel[0] == "rect":
-                painter.drawRect(sel[1].x(), sel[1].y(), sel[2].x()-sel[1].x(), sel[2].y()-sel[1].y())
-            else:
-                poly = QPolygon()
-                for p in sel:
-                    if p == "poly":
-                        continue
-                    poly.append(p)
-                painter.drawPolygon(poly)
+            poly = QPolygon()
+            for p in sel:
+                poly.append(p)
+            painter.drawPolygon(poly)
 
 
     def paintRect(self, painter):
