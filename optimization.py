@@ -5,6 +5,17 @@ import time
 # TODO: remove after testing
 from PyQt5.QtCore import QPoint, QPointF
 
+class optParams(object):
+    def __init__(self, r, th, f, h, a, g, next_pos, next_time):
+        self.ranges = r
+        self.th = th
+        self.f = f
+        self.h = h
+        self.alpha = a
+        self.gamma_max = g
+        self.next_pos = next_pos
+        self.next_time = next_time
+
 def prepParameters(sel, th, f, h, alpha, gamma):
     ##################################
     ### Process the selected areas ###
@@ -63,7 +74,6 @@ def prepParameters(sel, th, f, h, alpha, gamma):
 
     # Again find the outermost x coords
     ranges = findOuter(c_ranges)
-    print(ranges)
 
     ######################################
     ### Get the next available passing ###
@@ -93,15 +103,18 @@ def prepParameters(sel, th, f, h, alpha, gamma):
         next_pos = (next_pos + d_deg) % 360
         next_time_s = time.localtime(next_time)
 
-    print(next_pos)
-    print(time.ctime(next_time))
+    params = optimParams(ranges, th, f, h, alpha, gamma, next_pos, next_time)
+    return params
+
+def optimize(p):
+    pass
 
     
 
     
 
 
-selections = [[QPoint(0, 0), QPoint(1, 0), QPoint(1, 1), QPoint(0, 1)], [QPointF(0.5, 0.5), QPointF(2, 0.5), QPointF(2, 2), QPointF(0.5, 2)], [QPointF(-0.5, 0.5), QPointF(3, 2)], [QPointF(4, 0.5), QPointF(6, 2)], [QPointF(5, 0.5), QPointF(7, 2)]]
+# selections = [[QPoint(0, 0), QPoint(1, 0), QPoint(1, 1), QPoint(0, 1)], [QPointF(0.5, 0.5), QPointF(2, 0.5), QPointF(2, 2), QPointF(0.5, 2)], [QPointF(-0.5, 0.5), QPointF(3, 2)], [QPointF(4, 0.5), QPointF(6, 2)], [QPointF(5, 0.5), QPointF(7, 2)]]
 
 
-prepParameters(selections, 0, 15.8, 0, 0, 0)
+# prepParameters(selections, 0, 15.8, 0, 0, 0)
