@@ -1,11 +1,14 @@
 from customFuncs import *
 import numpy as np
+import time
 
 # TODO: remove after testing
 from PyQt5.QtCore import QPoint, QPointF
 
 def prepParameters(sel, th, f, h, alpha, gamma):
-
+    ##################################
+    ### Process the selected areas ###
+    ##################################
     # Transform data from QPoints to numpy arrays
     areas = []
     for s in sel:
@@ -61,6 +64,33 @@ def prepParameters(sel, th, f, h, alpha, gamma):
     # Again find the outermost x coords
     ranges = findOuter(c_ranges)
     print(ranges)
+
+    ######################################
+    ### Get the next available passing ###
+    ######################################
+    start_str = "3. 9. 2020, 8:00"
+    start_time = time.mktime(time.strptime(start_str, "%d. %m. %Y, %H:%M"))
+    curr_time = time.time()
+    # start position in geo longitude deg
+    start_pos = 14.838006
+
+    # Orbital period in seconds
+    T = 24/f * 60 * 60
+
+    # N of deg the satelite moves each time it circles earth
+    d_deg = 360/f
+
+    time_d = curr_time-start_time
+    n = np.ceil(time_d / T)
+
+    next_pos = (d_deg * n) % 360
+    next_time = start_time + T * n
+
+    
+
+    
+
+
 
 
     
