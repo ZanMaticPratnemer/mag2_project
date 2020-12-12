@@ -1,6 +1,13 @@
 import numpy as np
 
 
+# Transformation between geographical coordinates and internal coordinate system
+x_k = 2.2907 * np.power(10.,-3)
+x_n = 13.2468137
+
+y_k = -1.5771 * np.power(10.,-3)
+y_n = 47.0369964
+
 def ccw(A, B, C):
     return (C.y()-A.y())*(B.x()-A.x()) > (B.y()-A.y())*(C.x()-A.x())
 
@@ -37,3 +44,15 @@ def findOuter(vectors):
         out.append(np.array([min_e, max_e]))
 
     return out
+
+def inToGeox(x):
+    return x_k * float(x) + x_n 
+
+def inToGeoy(y):
+    return y_k * float(y) + y_n
+
+def geoToInx(x):
+    return (float(x) - x_n) / x_k
+
+def geoToIny(y):
+    return (float(y) - y_n) / y_k

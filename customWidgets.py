@@ -1,7 +1,9 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QPoint, QSize
 from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen, QPolygon
-from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox, QWidget
+from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QDoubleSpinBox, QComboBox, QGroupBox, QWidget
+
+from customFuncs import *
 
 map_height = 1125
 map_width = 1500
@@ -110,7 +112,7 @@ class Map(QWidget):
     def setDisplaySelections(self, b):
         self.display_selections = b
         
-class CoordControl(QSpinBox):
+class CoordControl(QDoubleSpinBox):
     def __init__(self, *args, **kw):
         super(CoordControl, self).__init__(*args, **kw)
         self.setFocusPolicy(Qt.StrongFocus)
@@ -138,18 +140,20 @@ class PointControl(QWidget):
 
         self.x = CoordControl(self)
         self.x.setGeometry(0, 0, 60, 25)
-        self.x.setRange(0, map_width)
+        self.x.setRange(inToGeox(0), inToGeox(map_width))
 
         self.y = CoordControl(self)
         self.y.setGeometry(0, 35, 60, 25)
-        self.y.setRange(0, map_height)
+        self.y.setRange(inToGeoy(map_height), inToGeoy(0))
 
         self.x.addKeyPressEvent(keyEvent)
         self.y.addKeyPressEvent(keyEvent)
 
+
+
     def setValue(self, p):
-        self.x.setValue(p.x())
-        self.y.setValue(p.y())
+        self.x.setValue(inToGeox(p.x()))
+        self.y.setValue(inToGeoy(p.y()))
 
     def getPoint(self):
-        return QPoint(self.x.value(), self.y.value())
+        return QPoint(geoToInx(self.x.value()), geoToIny(self.y.value()))

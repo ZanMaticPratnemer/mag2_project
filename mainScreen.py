@@ -321,10 +321,8 @@ class Ui_MainWindow(object):
         self.map.update()
 
     def keyPressEventRect(self, event):
-        self.p1.setX(self.p1c.x.value())
-        self.p1.setY(self.p1c.y.value())
-        self.p2.setX(self.p2c.x.value())
-        self.p2.setY(self.p2c.y.value())
+        self.p1 = self.p1c.getPoint()
+        self.p2 = self.p2c.getPoint()
 
         self.map.setP1(self.p1)
         self.map.setP2(self.p2)
