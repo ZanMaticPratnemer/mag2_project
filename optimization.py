@@ -85,19 +85,23 @@ def prepParameters(sel, th, f, h, alpha, gamma):
 
     next_pos = (d_deg * n) % 360
     next_time = start_time + T * n
+    next_time_s = time.localtime(next_time)
+
+    # Approximate position and time for the flight to be usefull
+    while (next_time_s.tm_hour < 8 or next_time_s.tm_hour > 20) or not (next_pos > 13.396613888888888-2 and next_pos < 16.60213611111111+2):
+        next_time = next_time + T
+        next_pos = (next_pos + d_deg) % 360
+        next_time_s = time.localtime(next_time)
+
+    print(next_pos)
+    print(time.ctime(next_time))
 
     
 
     
-
-
-
-
-    
-
 
 
 selections = [[QPoint(0, 0), QPoint(1, 0), QPoint(1, 1), QPoint(0, 1)], [QPointF(0.5, 0.5), QPointF(2, 0.5), QPointF(2, 2), QPointF(0.5, 2)], [QPointF(-0.5, 0.5), QPointF(3, 2)], [QPointF(4, 0.5), QPointF(6, 2)], [QPointF(5, 0.5), QPointF(7, 2)]]
 
 
-prepParameters(selections, 0, 0, 0, 0, 0)
+prepParameters(selections, 0, 15.8, 0, 0, 0)
