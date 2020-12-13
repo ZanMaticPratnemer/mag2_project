@@ -81,7 +81,9 @@ def prepParameters(sel, th, f, h, alpha, gamma):
     start_str = "3. 9. 2020, 8:00"
     start_time = time.mktime(time.strptime(start_str, "%d. %m. %Y, %H:%M"))
     curr_time = time.time()
-    # start position in geo longitude deg
+    # Start position in geo longitude deg
+    # We presume that the satelite flew over 46.119553 latitude
+    # at 14.838006 longitude
     start_pos = 14.838006
 
     # Orbital period in seconds
@@ -95,19 +97,37 @@ def prepParameters(sel, th, f, h, alpha, gamma):
 
     next_pos = (d_deg * n) % 360
     next_time = start_time + T * n
-    next_time_s = time.localtime(next_time)
 
     # Approximate position and time for the flight to be usefull
-    while (next_time_s.tm_hour < 8 or next_time_s.tm_hour > 20) or not (next_pos > 13.396613888888888-2 and next_pos < 16.60213611111111+2):
+    while not flightValid(next_pos, next_time):
         next_time = next_time + T
         next_pos = (next_pos + d_deg) % 360
-        next_time_s = time.localtime(next_time)
 
     params = optimParams(ranges, th, f, h, alpha, gamma, next_pos, next_time)
     return params
 
-def optimize(p):
-    pass
+def optimize(p, add_flights=0):
+    # First check approximately with how much satelite passings we can cover all areas
+    # Get the maximum picture width and divide all combined ranges with it
+    # This will not always get the correct number of passings needed!!
+    _, max_width = angleToWidth(p.gamma_max, p.alpha, p.h)
+    
+    combined_range
+    for range in p.ranges:
+        combined_range = combined_range + range[1] - range[0]
+    n_of_flights = np.ceil(combined_range/max_width)*2 + add_flights
+
+    flights = [[p.next_pos, p.next_time]]
+    next_time = p.next_time
+    next_pos = p.next_pos
+    while len(flights) < n_of_flights:
+        while True:
+            next_time = next_time + T
+            next_pos = (next_pos + d_deg) % 360
+            if flightValid(next_pos, next_time):
+                break
+        flights.append([next_pos, next_time])
+
 
     
 
