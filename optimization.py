@@ -17,6 +17,11 @@ class optParams(object):
         self.next_time = next_time
 
 def prepParameters(sel, th, f, h, alpha, gamma):
+    ############################################
+    ### Transform height into internal units ###
+    ############################################
+    h = geoToIny(kmToLongitude(h)+x_n)
+    
     ##################################
     ### Process the selected areas ###
     ##################################
