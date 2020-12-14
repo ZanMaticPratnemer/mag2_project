@@ -72,6 +72,17 @@ def prepParameters(sel, th, f, h, alpha, gamma):
             cluster = np.append(cluster, ranges[e])
         c_ranges.append(cluster)
 
+    # Add the non everlaping ranges to the new range list
+    for i in range(len(ranges)):
+        add = True
+        for group in combine:
+            if i in group:
+                add = False
+                break
+
+        if add:
+            c_ranges.append(ranges[i])
+
     # Again find the outermost x coords
     ranges = findOuter(c_ranges)
 
@@ -120,7 +131,7 @@ def optimize(p, add_flights=0):
     flights = [[p.next_pos, p.next_time]]
     next_time = p.next_time
     next_pos = p.next_pos
-    while len(flights) < n_of_flights:
+    while not canCover(flights, p.ranges, p.gamma_max, p.alpha, p.h):
         while True:
             next_time = next_time + T
             next_pos = (next_pos + d_deg) % 360
