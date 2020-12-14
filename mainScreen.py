@@ -36,7 +36,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowTitle("Satelit")
-        MainWindow.setGeometry(QtCore.QRect(50, 50, 1075, 870))
+        # MainWindow.setGeometry(QtCore.QRect(50, 50, 1075, 870))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
@@ -46,12 +46,12 @@ class Ui_MainWindow(object):
 
         self.map = Map()
         self.map.setEnabled(True)
-        self.map.setGeometry(QtCore.QRect(0, 50, 1075, 820))
+        # self.map.setGeometry(QtCore.QRect(0, 50, 1075, 820))
         self.map.setObjectName("label")
 
         self.map.mousePressEvent = self.mousePressEventRect
         self.map.mouseMoveEvent = self.mouseMoveEventRect
-        self.map.mouseReleaseEvent = self.mouseMoveReleaseRect
+        self.map.mouseReleaseEvent = self.mouseReleaseEventRect
 
         self.p1c = PointControl(self.keyPressEventRect)
         self.p2c = PointControl(self.keyPressEventRect)
@@ -246,7 +246,7 @@ class Ui_MainWindow(object):
 
             self.p2c.setValue(self.p2)
 
-    def mouseMoveReleaseRect(self, event):
+    def mouseReleaseEventRect(self, event):
         self.move_x_p1 = False
         self.move_x_p2 = False
         self.move_y_p1 = False
@@ -345,7 +345,7 @@ class Ui_MainWindow(object):
 
             self.map.mousePressEvent = self.mousePressEventRect
             self.map.mouseMoveEvent = self.mouseMoveEventRect
-            self.map.mouseReleaseEvent = self.mouseMoveReleaseRect
+            self.map.mouseReleaseEvent = self.mouseReleaseEventRect
 
             self.mode_name = "rect"
             self.map.setRectMode()

@@ -3,11 +3,11 @@ import time
 
 
 # Transformation between geographical coordinates and internal coordinate system
-x_k = 2.2907 * np.power(10.,-3)
-x_n = 13.2468137
+x_k = 3./1294
+x_n = 13.254
 
-y_k = -1.5771 * np.power(10.,-3)
-y_n = 47.0369964
+y_k = -1./431
+y_n = 46.948
 
 # Approx latitude
 a_lat = 46.119553

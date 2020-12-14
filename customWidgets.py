@@ -5,13 +5,13 @@ from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QDoubleSpinBox, QComboBo
 
 from customFuncs import *
 
-map_height = 1125
-map_width = 1500
+map_height = 676
+map_width = 1487
 
 class Map(QWidget):
     def __init__(self, *args, **kw):
         super(Map, self).__init__(*args, **kw)
-        self.image = QPixmap("si-04.jpg")
+        self.image = QPixmap("slovenia.png")
         self.setFixedSize(map_width, map_height)
 
         self.br_sel = QBrush(QtGui.QColor(10, 10, 150, 40))
