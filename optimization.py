@@ -99,7 +99,7 @@ def prepParameters(sel, th, f, h, alpha, gamma):
     next_time = start_time + T * n
 
     # Approximate position and time for the flight to be usefull
-    while not flightValid(next_pos, next_time):
+    while not flightValid(next_pos, next_time, ranges, th, gamma, alpha, h):
         next_time = next_time + T
         next_pos = (next_pos + d_deg) % 360
 
@@ -124,7 +124,7 @@ def optimize(p, add_flights=0):
         while True:
             next_time = next_time + T
             next_pos = (next_pos + d_deg) % 360
-            if flightValid(next_pos, next_time):
+            if flightValid(next_pos, next_time, p.ranges, p.th, p.gamma_max, p.alpha, p.h):
                 break
         flights.append([next_pos, next_time])
 

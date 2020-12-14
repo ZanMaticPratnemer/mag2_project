@@ -85,7 +85,7 @@ class Ui_MainWindow(object):
         self.display_selections.setSizePolicy(sp)
         self.display_selections.stateChanged.connect(self.displaySelection)
 
-        self.run_opt = QPushButton("Optimise")
+        self.run_opt = QPushButton("Optimize")
         self.run_opt.setMaximumSize(self.save_selection.sizeHint())
         self.run_opt.setSizePolicy(sp)
         self.run_opt.clicked.connect(self.getConfig)

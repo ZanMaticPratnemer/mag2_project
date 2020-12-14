@@ -12,6 +12,7 @@ y_n = 46.948
 # Approx latitude
 a_lat = 46.119553
 
+
 # Length of a longitude degree at a_lat in kilometers
 deg = (111412.84*np.cos(np.radians(a_lat)) - 93.5*np.cos(np.radians(a_lat)) + 0.118*np.cos(np.radians(a_lat))) * np.power(10., -3)
 
@@ -24,7 +25,7 @@ def intersect(A, B, C, D):
 def euclDist(A, B):
     return np.sqrt(np.power(A.x() - B.x(), 2) + np.power(A.y() - B.y(), 2))
 
-# Angle of z axis to width of picture in km
+# Angle of z axis to width of picture in internal coordinate system
 # Returns dist to start of the picture and picture width in a list
 def angleToWidth(gamma, alpha, h):
     c = np.tan(gamma-alpha) * h
@@ -64,9 +65,22 @@ def geoToInx(x):
 def geoToIny(y):
     return (float(y) - y_n) / y_k
 
-def flightValid(pos, t):
+def flightValid(pos, t, ranges, th, max_gamma, alpha, h):
     ts = time.localtime(t)
-    return ((t_s.tm_hour > 8 and t_s.tm_hour < 20) and (pos > 13.396613888888888-2 and pos < 16.60213611111111+2))
+    rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
+    if (t_s.tm_hour > 8 and t_s.tm_hour < 20):
+        p_in = np.array([[geoToInx(pos)], [geoToIny(a_lat)]])
+        p_in = rot @ p_in
+        p = p_in[0][0]
+        c, d = angleToWidth(np.abs(max_gamma), alpha, h)
+        reach = c + d
+
+        for r in ranges:
+            r = np.abs(r - reach)
+            if r[0] < reach:
+                return True
+
+    return False
 
 def kmToLongitude(km):
     deg = (111412.84*np.cos(np.radians(a_lat)) - 93.5*np.cos(np.radians(a_lat)) + 0.118*np.cos(np.radians(a_lat))) * np.power(10., -3)
