@@ -1,7 +1,0 @@
-Make saved selections editable
-
-
-Visuals duh...
-
-
-Implement the optimization algorithm
