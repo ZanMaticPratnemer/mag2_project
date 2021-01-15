@@ -37,7 +37,7 @@ def angleToWidth(gamma, alpha, h):
     a = l * np.sin(alpha)/np.sin(beta)
     b = l * np.sin(alpha)/np.sin(phi)
 
-    return (c, a + b)
+    return (geoToInx(kmToLongitude(c)+x_n), geoToInx(kmToLongitude(a + b)+x_n))
 
 # Get input of multiple vectors
 # Output the same number of vectors but with only the lowest and the highest element of input vectors
@@ -74,7 +74,7 @@ def flightValid(pos, t, ranges, th, max_gamma, alpha, h):
         p_in = np.array([[geoToInx(pos)], [geoToIny(a_lat)]])
         p_in = rot @ p_in
         p = p_in[0][0]
-        c, d = angleToWidth(np.abs(max_gamma), alpha, h)
+        c, d = angleToWidth(max_gamma, alpha, h)
         reach = c + d
 
         for r in ranges:

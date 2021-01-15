@@ -17,10 +17,6 @@ class optParams(object):
         self.next_time = next_time
 
 def prepParameters(sel, th, f, h, alpha, gamma):
-    ############################################
-    ### Transform height into internal units ###
-    ############################################
-    h = geoToIny(kmToLongitude(h)+x_n)
     
     ##################################
     ### Process the selected areas ###
@@ -152,13 +148,4 @@ def optimize(p, add_flights=0):
 
     # Find out how many of those flights wee need and with what parameters
     print(flights)
-
     
-
-    
-
-
-# selections = [[QPoint(0, 0), QPoint(1, 0), QPoint(1, 1), QPoint(0, 1)], [QPointF(0.5, 0.5), QPointF(2, 0.5), QPointF(2, 2), QPointF(0.5, 2)], [QPointF(-0.5, 0.5), QPointF(3, 2)], [QPointF(4, 0.5), QPointF(6, 2)], [QPointF(5, 0.5), QPointF(7, 2)]]
-
-
-# prepParameters(selections, 0, 15.8, 0, 0, 0)
