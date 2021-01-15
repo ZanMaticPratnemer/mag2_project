@@ -33,6 +33,13 @@ class Ui_MainWindow(object):
 
         self.saved_selections = []
 
+        ## TEMP
+        self.f = 15.8
+        self.th = 0
+        self.h = 500
+        self.alpha = 1
+        self.gamma = 30
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowTitle("Satelit")
@@ -114,7 +121,7 @@ class Ui_MainWindow(object):
         self.selections_box.setLayout(self.selections_layout)
         self.control_layout.addWidget(self.selections_box)
 
-        self.opt_box = QGroupBox("Optimisation")
+        self.opt_box = QGroupBox("Optimization")
         self.opt_layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.opt_box.setLayout(self.opt_layout)
         self.control_layout.addWidget(self.opt_box)
@@ -398,7 +405,7 @@ class Ui_MainWindow(object):
         self.map.update()
 
     def getConfig(self):
-        params = prepParameters(self.saved_selections, th, f, h, alpha/2, gamma)
+        params = prepParameters(self.saved_selections, self.th, self.f, self.h, self.alpha/2, self.gamma)
         res = optimize(params)
 
 

@@ -26,8 +26,10 @@ def euclDist(A, B):
     return np.sqrt(np.power(A.x() - B.x(), 2) + np.power(A.y() - B.y(), 2))
 
 # Angle of z axis to width of picture in internal coordinate system
-# Returns dist to start of the picture (from flight path) and picture width in a list
+# Returns dist to start of the picture (from flight path) and picture width in a touple
 def angleToWidth(gamma, alpha, h):
+    gamma = np.radians(gamma)
+    alpha = np.radians(alpha)
     c = np.tan(gamma-alpha) * h
     l = h/np.cos(gamma)
     beta = np.pi/2 - (gamma + alpha)
@@ -68,7 +70,7 @@ def geoToIny(y):
 def flightValid(pos, t, ranges, th, max_gamma, alpha, h):
     ts = time.localtime(t)
     rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
-    if (t_s.tm_hour > 8 and t_s.tm_hour < 20):
+    if (ts.tm_hour >= 7 and ts.tm_hour <= 21):
         p_in = np.array([[geoToInx(pos)], [geoToIny(a_lat)]])
         p_in = rot @ p_in
         p = p_in[0][0]
@@ -85,19 +87,33 @@ def kmToLongitude(km):
     deg = (111412.84*np.cos(np.radians(a_lat)) - 93.5*np.cos(np.radians(a_lat)) + 0.118*np.cos(np.radians(a_lat))) * np.power(10., -3)
     return km/deg
 
-def canCover(flights, ranges, max_gamma, alpha, h):
+def canCover(flights_geo, p):
+    ranges = p.ranges
+    max_gamma = p.gamma_max
+    alpha = p.alpha
+    h = p.h
+    th = p.th
     # Sort flights and ranges by position ascending
-    flights = sorted(flights, key=lambda pos: pos[0])
+    flights_geo = sorted(flights_geo, key=lambda pos: pos[0])
     ranges = sorted(ranges, key=lambda pos: pos[0])
+
+    rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
+
+    flights = []
+    for flight in flights_geo:
+        p_in = np.array([[geoToInx(flight[0])], [geoToIny(a_lat)]])
+        p_in = rot @ p_in
+        flights.append([p_in[0][0], flight[1]])
 
     # Area still covered by next flight
     cov_area = np.array([0, 0])
 
-    c_max, d = angleToWidth(max_gamma, a, h)
-    if c_max < 0:
-        reach_max = c_max
-    else:
-        reach_max = c_max + d
+    c_max, d = angleToWidth(max_gamma, alpha, h)
+    # c_max is always positive since max_gamma is always positive
+    # Because of that we get reach as c_max + d
+    reach_max = c_max + d
+
+    
 
     for f in flights:
         if not ranges:
@@ -105,29 +121,20 @@ def canCover(flights, ranges, max_gamma, alpha, h):
 
         r = ranges[0]
 
-        # First check if last flight left a covered area to the right of the previous range
-        while True:
-            if not ranges:
-                return True
-            if (cov_area[0] < r[0]) and (cov_area[1] > r[0]) and (cov_area[1] < r[1]):
-                ranges[0][0] = c+w+f[0]
-                r = ranges[0]
-                continue
-            elif cov_area[0] < r[0] and (cov_area[1] > r[1]):
-                ranges.pop(0)
-                cov_area = np.array([r[1], cov_area[1]])
-                r = ranges[0]
-            break
-
-        if not (r[0] - f[0] < reach_max):
+        if (r[0] - f[0] > reach_max) and (r[0] - f[0] > 0):
             continue
-        if c_max < 0:
-            if c_max + f[0] > r[0]:
-                return False
-            else:
-                c = r[0]
+        elif (r[0] - f[0] < 0) and (np.abs(r[0] - f[0]) > reach_max):
+            return False
+
+        # If we cant reach the begining of the range
+        # we take a picture at our max reach and only partially cover the range
+        if r[0] + d - f[0] > reach_max:
+            c = c_max
+        # Else take the picture at the begining of the range
         else:
-            c = min(c_max+f[0], r[0])
+            c = r[0] - f[0]
+
+        # Get the actual area we can cover
         w = cToWidth(c, alpha, h)
 
         # Four scenarios, but only the first two possible:
@@ -139,11 +146,26 @@ def canCover(flights, ranges, max_gamma, alpha, h):
         # Scenario 3 and 4 are not possible because we return false if
         # the leftmost picture area does not begin before or at the start of the range
 
-        if (c+f[0] < r[0]) and (c+w+f[0] > r[0]) and (c+w+f[0] < r[1]):
+        if (c+f[0] <= r[0]) and (c+w+f[0] > r[0]) and (c+w+f[0] < r[1]):
             ranges[0][0] = c+w+f[0]
-        elif c+f[0] < r[0] and (c+w+f[0] > r[1]):
+        elif c+f[0] <= r[0] and (c+w+f[0] >= r[1]):
             ranges.pop(0)
             cov_area = np.array([r[1], c+w+f[0]])
+            if not ranges:
+                return True
+
+            # Because the satelite takes the picture of the area beyond our first range
+            # it can also cover more areas, if they are close enough. Check for that
+            while cov_area[1] > ranges[0][0]:
+                if (cov_area[1] > ranges[0][0]) and (cov_area[1] < ranges[0][1]):
+                    ranges[0][0] = cov_area[1]
+                    cov_area = np.array([0, 0])
+                elif cov_area[1] >= ranges[0][1]:
+                    cov_area = np.array([ranges[0][1], cov_area[1]])
+                    ranges.pop(0)
+                    if not ranges:
+                        return True
+    
 
     if not ranges:
         return True

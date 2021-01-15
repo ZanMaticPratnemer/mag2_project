@@ -119,24 +119,30 @@ def prepParameters(sel, th, f, h, alpha, gamma):
         next_time = next_time + T
         next_pos = (next_pos + d_deg) % 360
 
-    params = optimParams(ranges, th, f, h, alpha, gamma, next_pos, next_time)
+    params = optParams(ranges, th, f, h, alpha, gamma, next_pos, next_time)
     return params
 
 def optimize(p, add_flights=0):
+    T = 24/p.f * 60 * 60
+    d_deg = 360/p.f
     # First check approximately with how much satelite passings we can cover all areas
     # Get the maximum picture width and divide all combined ranges with it
     # This will not always get the correct number of passings needed!!
     _, max_width = angleToWidth(p.gamma_max, p.alpha, p.h)
+
+    print("optimize")
     
-    combined_range
+    combined_range = []
     for range in p.ranges:
         combined_range = combined_range + range[1] - range[0]
     n_of_flights = np.ceil(combined_range/max_width)*2 + add_flights
 
+
+    # Get a sufficent group of flights
     flights = [[p.next_pos, p.next_time]]
     next_time = p.next_time
     next_pos = p.next_pos
-    while not canCover(flights, p.ranges, p.gamma_max, p.alpha, p.h):
+    while not canCover(flights, p):
         while True:
             next_time = next_time + T
             next_pos = (next_pos + d_deg) % 360
@@ -144,6 +150,8 @@ def optimize(p, add_flights=0):
                 break
         flights.append([next_pos, next_time])
 
+    # Find out how many of those flights wee need and with what parameters
+    print(flights)
 
     
 
