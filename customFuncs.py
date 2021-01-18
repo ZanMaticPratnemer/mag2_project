@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import copy
 
 
 # Transformation between geographical coordinates and internal coordinate system
@@ -88,7 +89,7 @@ def kmToLongitude(km):
     return km/deg
 
 def canCover(flights_geo, p):
-    ranges = p.ranges
+    ranges = copy.deepcopy(p.ranges)
     max_gamma = p.gamma_max
     alpha = p.alpha
     h = p.h
