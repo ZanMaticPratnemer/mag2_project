@@ -1,6 +1,8 @@
 from customFuncs import *
 import numpy as np
 import time
+import random
+import copy
 
 # TODO: remove after testing
 from PyQt5.QtCore import QPoint, QPointF
@@ -158,5 +160,29 @@ def optimize(p):
     n_min = np.ceil(float(combined_range)/float(max_width))
 
     print(f"n_min: {n_min}")
+    
+    # Population size
+    ps = 150
 
-    # Create an initial population
+    # Mutation factor
+    mf = 0.01
+
+    # Try to find a solution with n_min flights.
+    # Then repeat untill we can cover the selected area
+    n = n_min
+    covered = False
+
+    while covered:
+        # Create an initial population.
+        # Individual is a list of flights with an added element of gamma.
+        # Flight time (second element in the list) can be used as an index,
+        # since it is unique for all flights.
+        pop = []
+
+        for i in range(ps):
+            ind = copy.deepcopy(random.sample(flights, k=int(n)))
+            for flight in ind:
+                flight.append(random.uniform(-p.gamma_max, p.gamma_max))
+            pop.append(ind)
+
+        print("t")
