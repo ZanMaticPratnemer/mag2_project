@@ -181,3 +181,51 @@ def cToWidth(c, alpha, h):
     _, d = angleToWidth(gamma, alpha, h)
     return d
 
+
+def cost(flights_, p):
+    flights = copy.deepcopy(flights_)
+    areas = copy.deepcopy(p.ranges)
+    th = p.th
+    alpha = p.alpha
+    h = p.h
+
+    # Biggest cost factor is the area left uncovered
+    for f in flights:
+        rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
+        p_in = np.array([[geoToInx(f[0])], [geoToIny(a_lat)]])
+        p_in = rot @ p_in
+        pos = p_in[0]
+        r, w = angleToWidth(f[2], alpha, h)
+        for i, a in enumerate(areas):
+            if not a:
+                continue
+            if (a[0] >= pos+r and a[0] <= pos+r+w) or (a[1] >= pos+r and a[1] <= pos+r+w):
+                # Flight at least partially covers the area
+
+                if (a[0] >= pos+r) and (a[1] <= pos+r+w):
+                    # Flight completely covers the area
+                    areas[i] = []
+                else:
+                    # Flight partially covers the area
+                    if pos+r <= a[0]:
+                        areas[i] = [pos+r+w, a[1]]
+                    else:
+                        areas[i] = [a[0], pos+r]
+        
+        # Clear empty areas
+        try:
+            while True:
+                areas.pop(areas.index([]))
+        except ValueError:
+            pass
+
+    # Get the sum of uncovered areas
+    sum = 0
+    if areas:
+        # Areas is not an empty list
+        # That means something is left uncovered
+        for a in areas:
+            sum = sum + (a[1] - a[0])
+
+
+
