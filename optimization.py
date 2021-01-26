@@ -143,12 +143,14 @@ def optimize(p):
                 break
         flights.append([next_pos, next_time])
 
-    # Find out how many of those flights wee need and with what parameters
+    # Find out how many of those flights we need and with what parameters
     print(flights)
 
     #########################
     ## Evolution algorithm ##
     #########################
+
+    # We do not need to index all flights, because their timestamp (flight[1]) can act as an index
     
 
     # Calculate the optimistic number of flights needed
@@ -157,32 +159,148 @@ def optimize(p):
     combined_range = 0
     for r in p.ranges:
         combined_range = combined_range + r[1] - r[0]
-    n_min = np.ceil(float(combined_range)/float(max_width))
+    n_min = int(np.ceil(float(combined_range)/float(max_width)))
 
     print(f"n_min: {n_min}")
-    
-    # Population size
-    ps = 150
 
-    # Mutation factor
-    mf = 0.01
+    # Number of parents for the next population
+    pn = 6
+
+    # Population size
+    # Parents + new children
+    ps = pn + 2*(2*pn**2 - 2*pn)
+
+    # Angle mutation factor
+    amf = 0.1
+
+    # Flight mutation factor
+    fmf = 0.01
 
     # Try to find a solution with n_min flights.
     # Then repeat untill we can cover the selected area
     n = n_min
     covered = False
 
-    while covered:
+    max_itter = 1000
+    
+
+    while not covered:
         # Create an initial population.
         # Individual is a list of flights with an added element of gamma.
         # Flight time (second element in the list) can be used as an index,
         # since it is unique for all flights.
         pop = []
 
+        # If we use all flights there is no use for flight mutation later on
+        if n == len(flights):
+            fmf = 0
+
         for i in range(ps):
-            ind = copy.deepcopy(random.sample(flights, k=int(n)))
+            ind = copy.deepcopy(random.sample(flights, k=n))
             for flight in ind:
                 flight.append(random.uniform(-p.gamma_max, p.gamma_max))
-            pop.append(ind)
+            pop.append([ind, cost(ind, p)])
 
-        print("t")
+        # Main optimization loop
+        for i in range(max_itter):
+            parents = []
+            # Get parents for a new population
+            for j in range(pn):
+                min_cost = np.inf
+                for ind in pop:
+                    if ind[1] < min_cost:
+                        if ind in parents:
+                            continue
+                        min_cost = ind[1]
+                        min_ind = ind
+                min_ind[0].sort(key=lambda f: f[1])
+                parents.append(min_ind)
+            
+            # Create a new population
+            pop = []
+
+            # Crossover
+            for p1 in parents:
+                for p2 in parents:
+                    if p1 == p2:
+                        continue
+
+                    cut = random.randrange(1, n)
+
+                    # Crossover
+                    c1 = p1[0][:cut] + p2[0][cut:]
+                    c2 = p2[0][:cut] + p1[0][cut:]
+
+
+                    # Check for duplicate flights
+                    for f_new in c1[cut:]:
+                        for f_old in c1[:cut]:
+                            if f_new[1] == f_old[1]:
+                                new = getRandomValidFlight(flights, c1)
+                                f_new[0] = new[0]
+                                f_new[1] = new[1]
+
+                    for f_new in c2[cut:]:
+                        for f_old in c2[:cut]:
+                            if f_new[1] == f_old[1]:
+                                new = getRandomValidFlight(flights, c1)
+                                f_new[0] = new[0]
+                                f_new[1] = new[1]
+
+                    pop.append([c1, np.inf])
+                    pop.append([c2, np.inf])
+
+            pop_m = copy.deepcopy(pop)
+
+            # Mutation
+            mutf = np.random.rand(ps-pn, n)
+            muta = np.random.rand(ps-pn, n)
+            for j, ind in enumerate(pop_m):
+                for k, f in enumerate(ind[0]):
+
+                    # Mutation of flights
+                    if mutf[j][k] < fmf:
+                        m = getRandomValidFlight(flights, ind[0])
+                        f[0] = m[0]
+                        f[1] = m[1]
+                    
+                    # # Mutation of angles
+                    # if muta[j][k] < amf:
+                    #     f[2] = random.uniform(-p.gamma_max, p.gamma_max)
+                    f[2] = random.uniform(-p.gamma_max, p.gamma_max)
+
+            pop = pop + pop_m
+
+            # Calculate costs for the new population
+            for ind in pop:
+                ind[1] = cost(ind[0], p)
+
+            # Add current parents to the new population
+            pop = pop + parents
+
+            min_cost = np.inf
+            for ind in pop:
+                if ind[1] < min_cost:
+                    min_cost = ind[1]
+                    min_ind = ind
+            print(min_cost)
+
+            
+        
+        min_cost = np.inf
+        for ind in pop:
+            if ind[1] < min_cost:
+                min_cost = ind[1]
+                min_ind = ind
+
+        if min_cost < 1:
+            print(min_ind)
+            covered = True
+        else:
+            n = n + 1
+            print(f"Staring a new optimization iteration with {n} flights used.")
+                        
+
+
+
+

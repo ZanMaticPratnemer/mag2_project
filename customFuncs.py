@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import copy
+import random
 
 
 # Transformation between geographical coordinates and internal coordinate system
@@ -188,16 +189,28 @@ def cost(flights_, p):
     th = p.th
     alpha = p.alpha
     h = p.h
+    cost = 0
+
+    # Total sum of all areas that need to be covered
+    sum_t = 0
+    for a in areas:
+        sum_t = sum_t + (a[1] - a[0])
+
+    # Sum of gamma angles
+    sum_g = 0
 
     # Biggest cost factor is the area left uncovered
     for f in flights:
+        # Add to the sum of gamma angles - will need later
+        sum_g = sum_g + abs(f[2])
+
         rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
         p_in = np.array([[geoToInx(f[0])], [geoToIny(a_lat)]])
         p_in = rot @ p_in
-        pos = p_in[0]
+        pos = p_in[0][0]
         r, w = angleToWidth(f[2], alpha, h)
         for i, a in enumerate(areas):
-            if not a:
+            if a == []:
                 continue
             if (a[0] >= pos+r and a[0] <= pos+r+w) or (a[1] >= pos+r and a[1] <= pos+r+w):
                 # Flight at least partially covers the area
@@ -213,19 +226,61 @@ def cost(flights_, p):
                         areas[i] = [a[0], pos+r]
         
         # Clear empty areas
-        try:
-            while True:
+        while True:
+            if [] in areas:
                 areas.pop(areas.index([]))
-        except ValueError:
-            pass
+            else:
+                break
 
     # Get the sum of uncovered areas
-    sum = 0
+    sum_u = 0
     if areas:
         # Areas is not an empty list
         # That means something is left uncovered
         for a in areas:
-            sum = sum + (a[1] - a[0])
+            sum_u = sum_u + (a[1] - a[0])
+
+
+
+    # Norm the sum with the total area to cover
+    u = sum_u / sum_t
+
+    sum_g = sum_g / len(flights)
+    # Norm the sum with the maximum possible angle
+    # TODO: decide if max possible angle should be CONSTANT or angle from this instance of optimization
+    g = sum_g/30
+
+    # Now both u and g are normalized to 1
+
+    # Covering all areas has infinitely higher priority than the angle pictures
+    # Now even if the smallest part of the areas is left uncovered, the cost will still be higher
+    # than all areas being covered with the worst possible angle
+    if u != 0:
+        cost = 1 + 10*u
+    cost = cost + g
+
+    if cost > 12 or cost < 0:
+        print("Error")
+
+    return cost
+
+def getRandomValidFlight(flights_all, flights_curr):
+    candidates = copy.copy(flights_all)
+    while True:
+        candidate = random.choice(candidates)
+
+        # Check if this flight is valid
+        # It could already be in the individual we are trying to mutate
+        valid = True
+        for fl in flights_curr:
+            if fl[1] == candidate[1]:
+                valid = False
+                candidates.pop(candidates.index(candidate))
+                break
+        if valid:
+            return candidate
+
+    
 
 
 
