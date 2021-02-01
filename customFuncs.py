@@ -190,6 +190,7 @@ def cost(flights_, p):
     alpha = p.alpha
     h = p.h
     cost = 0
+    flights_miss = []
 
     # Total sum of all areas that need to be covered
     sum_t = 0
@@ -204,6 +205,9 @@ def cost(flights_, p):
         # Add to the sum of gamma angles - will need later
         sum_g = sum_g + abs(f[2])
 
+        in_area = False
+        min_dist = np.inf
+
         rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
         p_in = np.array([[geoToInx(f[0])], [geoToIny(a_lat)]])
         p_in = rot @ p_in
@@ -214,6 +218,7 @@ def cost(flights_, p):
                 continue
             if (a[0] >= pos+r and a[0] <= pos+r+w) or (a[1] >= pos+r and a[1] <= pos+r+w):
                 # Flight at least partially covers the area
+                in_area = True
 
                 if (a[0] >= pos+r) and (a[1] <= pos+r+w):
                     # Flight completely covers the area
@@ -224,7 +229,15 @@ def cost(flights_, p):
                         areas[i] = [pos+r+w, a[1]]
                     else:
                         areas[i] = [a[0], pos+r]
+            else:
+                for edge in a:
+                    if min_dist > abs(edge - pos+r+w/2):
+                        min_dist = abs(edge - pos+r+w/2)
+
+        if not in_area:
+            flights_miss.append(min_dist)
         
+
         # Clear empty areas
         while True:
             if [] in areas:
@@ -247,22 +260,23 @@ def cost(flights_, p):
 
     sum_g = sum_g / len(flights)
     # Norm the sum with the maximum possible angle
-    # TODO: decide if max possible angle should be CONSTANT or angle from this instance of optimization
-    g = sum_g/30
+    g = sum_g/p.gamma_max
+
+    # TODO: find a better norm
+    miss = sum(flights_miss) / (len(flights)*1500)
 
     # Now both u and g are normalized to 1
 
     # Covering all areas has infinitely higher priority than the angle pictures
     # Now even if the smallest part of the areas is left uncovered, the cost will still be higher
     # than all areas being covered with the worst possible angle
-    if u != 0:
-        cost = 1 + 10*u
-    cost = cost + g
+    # if u != 0:
+    #     cost = 1 + 10*u
+    # cost = cost + g
 
-    if cost > 12 or cost < 0:
-        print("Error")
+    cost = 1000*u + 100*miss + g
 
-    return cost
+    return (cost, u, miss)
 
 def getRandomValidFlight(flights_all, flights_curr):
     candidates = copy.copy(flights_all)
