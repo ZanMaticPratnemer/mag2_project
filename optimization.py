@@ -164,24 +164,20 @@ def optimize(p):
     print(f"n_min: {n_min}")
 
     # Number of parents for the next population
-    pn = 6
+    pn = 4
 
-    # Population size
-    # Parents + new children
-    ps = pn + 2*(2*pn**2 - 2*pn)
-
-    # Angle mutation factor
-    amf = 0.1
+    # Initial population size
+    ps = 1000
 
     # Flight mutation factor
-    fmf = 0.01
+    fmf = 1
 
     # Try to find a solution with n_min flights.
     # Then repeat untill we can cover the selected area
     n = n_min
     covered = False
 
-    max_itter = 1000
+    max_itter = 500
     
 
     while not covered:
@@ -201,6 +197,11 @@ def optimize(p):
                 flight.append(random.uniform(-p.gamma_max, p.gamma_max))
             pop.append([ind, cost(ind, p)])
 
+
+
+        prev_min = np.inf
+        end_cond = 0
+
         # Main optimization loop
         for i in range(max_itter):
             parents = []
@@ -208,92 +209,121 @@ def optimize(p):
             for j in range(pn):
                 min_cost = np.inf
                 for ind in pop:
-                    if ind[1] < min_cost:
+                    if ind[1][0] < min_cost:
                         if ind in parents:
                             continue
-                        min_cost = ind[1]
+                        min_cost = ind[1][0]
                         min_ind = ind
                 min_ind[0].sort(key=lambda f: f[1])
                 parents.append(min_ind)
             
             # Create a new population
             pop = []
+            parents_test=[a[0] for a in parents]
 
             # Crossover
-            for p1 in parents:
-                for p2 in parents:
-                    if p1 == p2:
-                        continue
+            if n != 1:
+                for p1 in parents:
+                    for p2 in parents:
+                        if p1 == p2:
+                            continue
 
-                    cut = random.randrange(1, n)
+                        cut = random.randrange(1, n)
 
-                    # Crossover
-                    c1 = p1[0][:cut] + p2[0][cut:]
-                    c2 = p2[0][:cut] + p1[0][cut:]
+                        # Crossover
+                        c1 = copy.deepcopy(p1[0][:cut]) + copy.deepcopy(p2[0][cut:])
+                        c2 = copy.deepcopy(p2[0][:cut]) + copy.deepcopy(p1[0][cut:])
 
 
-                    # Check for duplicate flights
-                    for f_new in c1[cut:]:
-                        for f_old in c1[:cut]:
-                            if f_new[1] == f_old[1]:
-                                new = getRandomValidFlight(flights, c1)
-                                f_new[0] = new[0]
-                                f_new[1] = new[1]
+                        # Check for duplicate flights
+                        for f_new in c1[cut:]:
+                            for f_old in c1[:cut]:
+                                if f_new[1] == f_old[1]:
+                                    new = getRandomValidFlight(flights, c1)
+                                    f_new[0] = new[0]
+                                    f_new[1] = new[1]
+                                    f_new[2] = random.uniform(-p.gamma_max, p.gamma_max)
 
-                    for f_new in c2[cut:]:
-                        for f_old in c2[:cut]:
-                            if f_new[1] == f_old[1]:
-                                new = getRandomValidFlight(flights, c1)
-                                f_new[0] = new[0]
-                                f_new[1] = new[1]
+                        for f_new in c2[cut:]:
+                            for f_old in c2[:cut]:
+                                if f_new[1] == f_old[1]:
+                                    new = getRandomValidFlight(flights, c2)
+                                    f_new[0] = new[0]
+                                    f_new[1] = new[1]
+                                    f_new[2] = random.uniform(-p.gamma_max, p.gamma_max)
 
-                    pop.append([c1, np.inf])
-                    pop.append([c2, np.inf])
+                        if c1 in parents_test:
+                            c1[random.randrange(n)][2] = random.uniform(-p.gamma_max, p.gamma_max)
+                        if c2 in parents_test:
+                            c2[random.randrange(n)][2] = random.uniform(-p.gamma_max, p.gamma_max)
+                            
+                        pop.append([c2, np.inf])
+                        pop.append([c1, np.inf])
 
-            pop_m = copy.deepcopy(pop)
+            # pop_m = copy.deepcopy(pop)
+            pop_m = []
 
             # Mutation
             mutf = np.random.rand(ps-pn, n)
-            muta = np.random.rand(ps-pn, n)
-            for j, ind in enumerate(pop_m):
+            for j, ind in enumerate(pop):
                 for k, f in enumerate(ind[0]):
 
                     # Mutation of flights
                     if mutf[j][k] < fmf:
+                        ind_m = copy.deepcopy(ind)
                         m = getRandomValidFlight(flights, ind[0])
-                        f[0] = m[0]
-                        f[1] = m[1]
-                    
-                    # # Mutation of angles
-                    # if muta[j][k] < amf:
-                    #     f[2] = random.uniform(-p.gamma_max, p.gamma_max)
-                    f[2] = random.uniform(-p.gamma_max, p.gamma_max)
+                        ind_m[0][k][0] = m[0]
+                        ind_m[0][k][1] = m[1]
+                        ind_m[0][k][2] = random.uniform(-p.gamma_max, p.gamma_max)
+                        pop_m.append(ind_m)
+
+            pop = pop + pop_m
+
+            # Add current parents to the new population
+            pop = pop + parents
+
+            # Mildly mutate parents and add them to the population
+            pop_m = []
+            for ind in parents:
+                for k, f in enumerate(ind[0]):
+                    ind_m = copy.deepcopy(ind)
+                    ind_m[0][k][2] = f[2] + random.gauss(0, 0.02)
+                    pop_m.append(ind_m)
+
 
             pop = pop + pop_m
 
             # Calculate costs for the new population
             for ind in pop:
                 ind[1] = cost(ind[0], p)
-
-            # Add current parents to the new population
-            pop = pop + parents
+                
 
             min_cost = np.inf
             for ind in pop:
-                if ind[1] < min_cost:
-                    min_cost = ind[1]
+                if ind[1][0] < min_cost:
+                    min_cost = ind[1][0]
                     min_ind = ind
             print(min_cost)
+
+            if prev_min == min_cost and min_ind[1][2] == 0:
+                end_cond = end_cond + 1
+                if end_cond == 50:
+                    break
+            else:
+                end_cond = 0
+            prev_min = min_cost
+
+
 
             
         
         min_cost = np.inf
         for ind in pop:
-            if ind[1] < min_cost:
-                min_cost = ind[1]
+            if ind[1][0] < min_cost:
+                min_cost = ind[1][0]
                 min_ind = ind
 
-        if min_cost < 1:
+        if min_ind[1][1] == 0:
             print(min_ind)
             covered = True
         else:
