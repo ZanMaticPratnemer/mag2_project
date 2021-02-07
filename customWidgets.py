@@ -1,7 +1,9 @@
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import Qt, QPoint, QSize
-from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen, QPolygon
+from PyQt5.QtCore import Qt, QPoint, QSize, QPointF
+from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen, QPolygon, QPolygonF
 from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QDoubleSpinBox, QComboBox, QGroupBox, QWidget
+
+import copy
 
 from customFuncs import *
 
@@ -23,6 +25,10 @@ class Map(QWidget):
         self.br_saved = QBrush(QtGui.QColor(10, 10, 150, 10))
         self.pen_saved = QPen(QtGui.QColor(10, 10, 100), 0)
 
+        self.br_covered = QBrush(QtGui.QColor(150, 10, 10, 7))
+        self.pen_covered = QPen(QtGui.QColor(10, 10, 100), 0)
+        self.pen_covered.setStyle(Qt.DashLine)
+
         self.p1_rect = QPoint(-3, -3)
         self.p2_rect = QPoint(-3, -3)
 
@@ -39,6 +45,8 @@ class Map(QWidget):
 
         self.paintCurSel = self.paintRect
 
+        self.display_flights = False
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.drawPixmap(self.rect(), self.image)
@@ -46,6 +54,11 @@ class Map(QWidget):
         if self.display_selections:
             self.paintSelections(painter)
         self.paintCurSel(painter)
+
+        if self.display_flights:
+            self.displayFlights(painter)
+
+        painter.end()
 
     def paintSelections(self, painter):
         painter.setBrush(self.br_saved)
@@ -111,6 +124,49 @@ class Map(QWidget):
 
     def setDisplaySelections(self, b):
         self.display_selections = b
+
+    def showFlights(self, flights):
+        self.flights = copy.deepcopy(flights)
+        self.display_flights = True
+        self.update()
+
+    def displayFlights(self, painter):
+        painter.setBrush(self.br_covered)
+        painter.setPen(self.pen_covered)
+
+        for f in self.flights:
+            gamma = f[2]
+            pos = f[0]
+            th = self.th
+
+            # Get the needed parameters
+            c, w = angleToWidth(gamma, self.alpha/2, self.h)
+            p = np.array([[geoToInx(pos)], [geoToIny(a_lat)]], dtype=float)
+
+            # Get points that lie on picture edges
+            A = p + np.array([[np.cos(np.radians(th))*c], [np.sin(np.radians(th))*c]], dtype=float)
+            B = p + np.array([[np.cos(np.radians(th))*(c+w)], [np.sin(np.radians(th))*(c+w)]], dtype=float)
+
+            # Define a line that represents picture edges
+            k = -np.tan(np.pi/2-np.radians(np.abs(th)))
+            nA = A[1][0] - (k*A[0][0])
+            nB = B[1][0] - (k*B[0][0])
+
+            # Get end points of the whole picture that the satelite takes
+            p11 = QPointF((0 - nA)/k, 0)
+            p21 = QPointF((map_height - nA)/k, map_height)
+            p12 = QPointF((0 - nB)/k, 0)
+            p22 = QPointF((map_height - nB)/k, map_height)
+
+            poly = QPolygonF()
+            poly << p11 << p12 << p22 << p21 << p11
+
+            painter.drawPolygon(poly)
+
+
+
+
+
         
 class CoordControl(QDoubleSpinBox):
     def __init__(self, *args, **kw):

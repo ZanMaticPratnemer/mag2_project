@@ -36,7 +36,7 @@ def prepParameters(sel, th, f, h, alpha, gamma):
         areas.append(np.transpose(ar))
 
     # Rotate for -th around (0,0)
-    rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
+    rot = np.array([[np.cos(np.radians(-th)), -np.sin(np.radians(-th))], [np.sin(np.radians(-th)), np.cos(np.radians(-th))]])
     rot_areas = []
     for i, area in enumerate(areas):
         rot_areas.append(rot @ area)
@@ -192,7 +192,11 @@ def optimize(p):
             fmf = 0
 
         for i in range(ps):
-            ind = copy.deepcopy(random.sample(flights, k=n))
+            if n == len(flights):
+                ind = copy.deepcopy(flights)
+            else:
+                ind = copy.deepcopy(random.sample(flights, k=n))
+                
             for flight in ind:
                 flight.append(random.uniform(-p.gamma_max, p.gamma_max))
             pop.append([ind, cost(ind, p)])
@@ -329,6 +333,8 @@ def optimize(p):
         else:
             n = n + 1
             print(f"Staring a new optimization iteration with {n} flights used.")
+
+    return min_ind[0]
                         
 
 

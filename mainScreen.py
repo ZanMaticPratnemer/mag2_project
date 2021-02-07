@@ -34,8 +34,8 @@ class Ui_MainWindow(object):
         self.saved_selections = []
 
         ## TEMP
-        self.f = 15.8
-        self.th = 0
+        self.f = 16.8
+        self.th = 5
         self.h = 500
         self.alpha = 1
         self.gamma = 30
@@ -148,6 +148,12 @@ class Ui_MainWindow(object):
         self.selections_layout.addWidget(self.display_selections)
 
         
+        #TODO: handle with gui inputs
+        self.map.f = self.f
+        self.map.th = self.th
+        self.map.h = self.h
+        self.map.alpha = self.alpha
+        self.map.gamma = self.gamma
         
 
 
@@ -407,6 +413,8 @@ class Ui_MainWindow(object):
     def getConfig(self):
         params = prepParameters(self.saved_selections, self.th, self.f, self.h, self.alpha/2, self.gamma)
         res = optimize(params)
+        #TODO: implement this function
+        self.map.showFlights(res)
 
 
 

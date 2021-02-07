@@ -71,7 +71,7 @@ def geoToIny(y):
 
 def flightValid(pos, t, ranges, th, max_gamma, alpha, h):
     ts = time.localtime(t)
-    rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
+    rot = np.array([[np.cos(np.radians(-th)), -np.sin(np.radians(-th))], [np.sin(np.radians(-th)), np.cos(np.radians(-th))]])
     if (ts.tm_hour >= 7 and ts.tm_hour <= 21):
         p_in = np.array([[geoToInx(pos)], [geoToIny(a_lat)]])
         p_in = rot @ p_in
@@ -99,7 +99,7 @@ def canCover(flights_geo, p):
     flights_geo = sorted(flights_geo, key=lambda pos: pos[0])
     ranges = sorted(ranges, key=lambda pos: pos[0])
 
-    rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
+    rot = np.array([[np.cos(np.radians(-th)), -np.sin(np.radians(-th))], [np.sin(np.radians(-th)), np.cos(np.radians(-th))]])
 
     flights = []
     for flight in flights_geo:
@@ -208,7 +208,7 @@ def cost(flights_, p):
         in_area = False
         min_dist = np.inf
 
-        rot = np.array([[np.cos(-th), -np.sin(-th)], [np.sin(-th), np.cos(-th)]])
+        rot = np.array([[np.cos(np.radians(-th)), -np.sin(np.radians(-th))], [np.sin(np.radians(-th)), np.cos(np.radians(-th))]])
         p_in = np.array([[geoToInx(f[0])], [geoToIny(a_lat)]])
         p_in = rot @ p_in
         pos = p_in[0][0]
@@ -270,11 +270,12 @@ def cost(flights_, p):
     # Covering all areas has infinitely higher priority than the angle pictures
     # Now even if the smallest part of the areas is left uncovered, the cost will still be higher
     # than all areas being covered with the worst possible angle
-    # if u != 0:
-    #     cost = 1 + 10*u
-    # cost = cost + g
+    if u != 0:
+        cost = 1 + 10000*u + 1000*miss + g
+    else:
+        cost = g
 
-    cost = 1000*u + 100*miss + g
+    # cost = 1000*u + 100*miss + g
 
     return (cost, u, miss)
 
