@@ -291,7 +291,7 @@ def optimize(p):
             for ind in parents:
                 for k, f in enumerate(ind[0]):
                     ind_m = copy.deepcopy(ind)
-                    ind_m[0][k][2] = f[2] + random.gauss(0, 0.02)
+                    ind_m[0][k][2] = f[2] + random.gauss(0, 0.01)
                     pop_m.append(ind_m)
 
 

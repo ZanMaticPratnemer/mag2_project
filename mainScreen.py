@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QSize
 from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen
-from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox, QPushButton, QSizePolicy, QCheckBox
+from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QSpinBox, QComboBox, QGroupBox, QPushButton, QSizePolicy, QCheckBox, QGridLayout, QMessageBox
 import sys
 from customWidgets import *
 from customFuncs import *
@@ -26,19 +26,12 @@ class Ui_MainWindow(object):
         # Index of the poly point being moved
         self.p_move_i = None
 
-        # Keeps track of what items are in self.points_layout
+        # Keeps track of what items are in self.point_value_layout
         self.points_items = []
 
         self.mode_name = "rect"
 
         self.saved_selections = []
-
-        ## TEMP
-        self.f = 16.8
-        self.th = 5
-        self.h = 500
-        self.alpha = 1
-        self.gamma = 30
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -62,6 +55,11 @@ class Ui_MainWindow(object):
 
         self.p1c = PointControl(self.keyPressEventRect)
         self.p2c = PointControl(self.keyPressEventRect)
+
+        self.lat_label = QLabel("Latitude:")
+        self.lat_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
+        self.lon_label = QLabel("Longitude:")
+        self.lon_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
 
         self.sel_mode = QComboBox()
         self.sel_mode.setFixedSize(QSize(60, 25))
@@ -93,9 +91,19 @@ class Ui_MainWindow(object):
         self.display_selections.stateChanged.connect(self.displaySelection)
 
         self.run_opt = QPushButton("Optimize")
-        self.run_opt.setMaximumSize(self.save_selection.sizeHint())
+        self.run_opt.setMaximumSize(self.run_opt.sizeHint())
         self.run_opt.setSizePolicy(sp)
         self.run_opt.clicked.connect(self.getConfig)
+
+        self.f = ParameterInput("f")
+        self.th = ParameterInput("θ")
+        self.h = ParameterInput("h")
+        self.alpha = ParameterInput("α")
+        self.gamma = ParameterInput("γ")
+
+        self.param_help = QPushButton("Help")
+        self.param_help.clicked.connect(self.displayHelp)
+
 
 
         MainWindow.setCentralWidget(self.centralwidget)
@@ -122,9 +130,12 @@ class Ui_MainWindow(object):
         self.control_layout.addWidget(self.selections_box)
 
         self.opt_box = QGroupBox("Optimization")
-        self.opt_layout = QBoxLayout(QBoxLayout.TopToBottom)
+        self.opt_layout = QBoxLayout(QBoxLayout.LeftToRight)
         self.opt_box.setLayout(self.opt_layout)
         self.control_layout.addWidget(self.opt_box)
+
+        self.opt_param_layout = QGridLayout()
+        self.opt_layout.addLayout(self.opt_param_layout)
 
         self.mode_sel_box = QGroupBox("Select selection mode")
         self.mode_sel_layout = QBoxLayout(QBoxLayout.TopToBottom)
@@ -136,24 +147,37 @@ class Ui_MainWindow(object):
         self.points_box.setLayout(self.points_layout)
         self.control_layout.addWidget(self.points_box)
 
+        self.point_label_layout = QBoxLayout(QBoxLayout.TopToBottom)
+        self.point_value_layout = QBoxLayout(QBoxLayout.LeftToRight)
+        
+        self.points_layout.addLayout(self.point_label_layout)
+        self.points_layout.addLayout(self.point_value_layout)
 
         self.mode_sel_layout.addWidget(self.sel_mode)
         self.mode_sel_layout.addWidget(self.poly_reset)
+        self.opt_param_layout.addWidget(self.f, 0, 0)
+        self.opt_param_layout.addWidget(self.th, 1, 0)
+        self.opt_param_layout.addWidget(self.h, 0, 1)
+        self.opt_param_layout.addWidget(self.alpha, 1, 1)
+        self.opt_param_layout.addWidget(self.gamma, 0, 2)
+        self.opt_layout.addWidget(self.param_help)
         self.opt_layout.addWidget(self.run_opt)
-        self.points_layout.addWidget(self.p1c)
-        self.points_layout.addWidget(self.p2c)
+        self.point_label_layout.addWidget(self.lat_label)
+        self.point_label_layout.addWidget(self.lon_label)
+        self.point_value_layout.addWidget(self.p1c)
+        self.point_value_layout.addWidget(self.p2c)
         self.screen_layout.addWidget(self.map)
         self.selections_layout.addWidget(self.save_selection)
         self.selections_layout.addWidget(self.clear_selections)
         self.selections_layout.addWidget(self.display_selections)
 
         
-        #TODO: handle with gui inputs
-        self.map.f = self.f
-        self.map.th = self.th
-        self.map.h = self.h
-        self.map.alpha = self.alpha
-        self.map.gamma = self.gamma
+        # Default parameter values
+        self.f.setValue(16.8)
+        self.th.setValue(5)
+        self.h.setValue(500)
+        self.alpha.setValue(1)
+        self.gamma.setValue(30)
         
 
 
@@ -291,7 +315,7 @@ class Ui_MainWindow(object):
             new_widget = PointControl(self.keyPressEventPoly)
             new_widget.setValue(new_p)
             self.points_items.append(new_widget)
-            self.points_layout.addWidget(new_widget)
+            self.point_value_layout.addWidget(new_widget, alignment=Qt.AlignLeft)
         else:
             c_pos = event.pos()
             for i, p in enumerate(self.points):
@@ -410,14 +434,37 @@ class Ui_MainWindow(object):
         self.map.setP2(self.p2)
         self.map.update()
 
+
     def getConfig(self):
-        params = prepParameters(self.saved_selections, self.th, self.f, self.h, self.alpha/2, self.gamma)
+        f = self.f.value()
+        th = self.th.value()
+        h = self.h.value()
+        alpha = self.alpha.value()
+        gamma = self.gamma.value()
+        self.map.f = f
+        self.map.th = th
+        self.map.h = h
+        self.map.alpha = alpha
+        self.map.gamma = gamma
+        params = prepParameters(self.saved_selections, th, f, h, alpha/2, gamma)
         res = optimize(params)
-        #TODO: implement this function
         self.map.showFlights(res)
 
+    def displayHelp(self):
+        self.help_msg = QMessageBox()
+        self.help_msg.setIcon(QMessageBox.Information)
+        self.help_msg.setText("f... number of orbits per day\n"
+                              "θ... angle between the flight path across Slovenia and a random meridian in degrees\n"
+                              "h... satelite altitude in km\n"
+                              "α... cameras angle of view in degrees\n"
+                              "γ... maximal angle for pictures to be taken at in degrees")
+        self.help_msg.setWindowTitle("Parameter help")
 
+        self.help_msg.setStandardButtons(QMessageBox.Ok)
 
+        self.help_msg.setFont(QFont('Arial', 11))
+
+        self.help_msg.exec()
 
 
 def main():

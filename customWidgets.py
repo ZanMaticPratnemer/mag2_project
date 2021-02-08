@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QPoint, QSize, QPointF
-from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen, QPolygon, QPolygonF
+from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen, QPolygon, QPolygonF, QFont
 from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QDoubleSpinBox, QComboBox, QGroupBox, QWidget
 
 import copy
@@ -173,6 +173,7 @@ class CoordControl(QDoubleSpinBox):
         super(CoordControl, self).__init__(*args, **kw)
         self.setFocusPolicy(Qt.StrongFocus)
         self.addedKeyEvent = None
+        self.setSingleStep(0.01)
     
     def addKeyPressEvent(self, func):
         self.addedKeyEvent = func
@@ -186,7 +187,7 @@ class CoordControl(QDoubleSpinBox):
         self.addedKeyEvent(event)
 
 class PointControl(QWidget):
-    def __init__(self,keyEvent ,*args, **kw):
+    def __init__(self, keyEvent, *args, **kw):
         super(PointControl, self).__init__(*args, **kw)
 
         self.setFocusPolicy(Qt.StrongFocus)
@@ -195,11 +196,11 @@ class PointControl(QWidget):
         self.setFixedSize(self.p_disp_size)
 
         self.x = CoordControl(self)
-        self.x.setGeometry(0, 0, 60, 25)
+        self.x.setGeometry(0, 35, 60, 25)
         self.x.setRange(inToGeox(0), inToGeox(map_width))
 
         self.y = CoordControl(self)
-        self.y.setGeometry(0, 35, 60, 25)
+        self.y.setGeometry(0, 0, 60, 25)
         self.y.setRange(inToGeoy(map_height), inToGeoy(0))
 
         self.x.addKeyPressEvent(keyEvent)
@@ -213,3 +214,56 @@ class PointControl(QWidget):
 
     def getPoint(self):
         return QPoint(geoToInx(self.x.value()), geoToIny(self.y.value()))
+
+class ParameterInput(QWidget):
+    def __init__(self, param, *args, **kw):
+        super(ParameterInput, self).__init__(*args, **kw)
+
+        self.setFocusPolicy(Qt.StrongFocus)
+
+        self.param_name = QLabel(param + ":", self)
+        self.param_name.setGeometry(0,0,15,25)
+        self.param_name.setFont(QFont('Arial', 11))
+
+        self.param_val = QDoubleSpinBox(self)
+        self.param_val.setGeometry(16, 0, 70, 25)
+
+        if param == "f":
+            min_val = 1
+            max_val = 25
+            dec_n = 1
+            suffix = "/day"
+        elif param == "θ":
+            min_val = -15
+            max_val = 15
+            dec_n = 1
+            suffix = "°"
+        elif param == "h":
+            min_val = 10
+            max_val = 1000
+            dec_n = 1
+            suffix = " km"
+        elif param == "α":
+            min_val = 0.01
+            max_val = 5
+            dec_n = 2
+            suffix = "°"
+        elif param == "γ":
+            min_val = 0
+            max_val = 30
+            dec_n = 1
+            suffix = "°"
+        
+        self.param_val.setRange(min_val, max_val)
+        self.param_val.setDecimals(dec_n)
+        self.param_val.setSingleStep(np.power(10.,-dec_n))
+        self.param_val.setSuffix(suffix)
+
+    def minimumSizeHint(self):
+        return QSize(86, 25)
+
+    def value(self):
+        return self.param_val.value()
+    
+    def setValue(self, value):
+        self.param_val.setValue(value)
