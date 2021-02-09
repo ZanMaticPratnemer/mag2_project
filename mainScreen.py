@@ -465,15 +465,3 @@ class Ui_MainWindow(object):
         self.help_msg.setFont(QFont('Arial', 11))
 
         self.help_msg.exec()
-
-
-def main():
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    gui = Ui_MainWindow()
-    gui.setupUi(MainWindow)
-    MainWindow.show()
-    app.exec_()
-
-if __name__ == "__main__":
-    main()
