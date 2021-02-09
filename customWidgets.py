@@ -1,9 +1,10 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QPoint, QSize, QPointF
 from PyQt5.QtGui import QPen, QPainter, QPixmap, QBrush, QPen, QPolygon, QPolygonF, QFont
-from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QDoubleSpinBox, QComboBox, QGroupBox, QWidget
+from PyQt5.QtWidgets import QLabel, QFrame, QBoxLayout, QDoubleSpinBox, QComboBox, QGroupBox, QWidget, QGridLayout, QFrame, QTableWidget, QTableWidgetItem
 
 import copy
+import time
 
 from customFuncs import *
 
@@ -25,9 +26,12 @@ class Map(QWidget):
         self.br_saved = QBrush(QtGui.QColor(10, 10, 150, 10))
         self.pen_saved = QPen(QtGui.QColor(10, 10, 100), 0)
 
-        self.br_covered = QBrush(QtGui.QColor(150, 10, 10, 7))
-        self.pen_covered = QPen(QtGui.QColor(10, 10, 100), 0)
-        self.pen_covered.setStyle(Qt.DashLine)
+
+        self.br_path = QBrush(QtGui.QColor(0, 0, 0, 0))
+        self.pen_path = QPen(QtGui.QColor(10, 10, 100), 0)
+        self.pen_path.setStyle(Qt.DashLine)
+        self.br_covered = QBrush(QtGui.QColor(150, 150, 10, 50))
+        self.pen_covered = QPen(QtGui.QColor(150, 150, 10, 50), 1)
 
         self.p1_rect = QPoint(-3, -3)
         self.p2_rect = QPoint(-3, -3)
@@ -46,6 +50,8 @@ class Map(QWidget):
         self.paintCurSel = self.paintRect
 
         self.display_flights = False
+
+        self.new_res = True
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -128,40 +134,153 @@ class Map(QWidget):
     def showFlights(self, flights):
         self.flights = copy.deepcopy(flights)
         self.display_flights = True
+        self.new_res = True
         self.update()
 
     def displayFlights(self, painter):
-        painter.setBrush(self.br_covered)
-        painter.setPen(self.pen_covered)
+        th = np.radians(self.th)
+
+        # Speed in internal coords/sec
+        sat_speed = geoToInx(kmToLongitude(7.6) + x_n)
 
         for f in self.flights:
             gamma = f[2]
+            ts = f[1]
             pos = f[0]
-            th = self.th
 
             # Get the needed parameters
             c, w = angleToWidth(gamma, self.alpha/2, self.h)
             p = np.array([[geoToInx(pos)], [geoToIny(a_lat)]], dtype=float)
 
             # Get points that lie on picture edges
-            A = p + np.array([[np.cos(np.radians(th))*c], [np.sin(np.radians(th))*c]], dtype=float)
-            B = p + np.array([[np.cos(np.radians(th))*(c+w)], [np.sin(np.radians(th))*(c+w)]], dtype=float)
+            A = p + np.array([[np.cos(th)*c], [np.sin(th)*c]], dtype=float)
+            B = p + np.array([[np.cos(th)*(c+w)], [np.sin(th)*(c+w)]], dtype=float)
 
             # Define a line that represents picture edges
-            k = -np.tan(np.pi/2-np.radians(np.abs(th)))
+            k = -np.tan(np.pi/2-np.abs(th))
             nA = A[1][0] - (k*A[0][0])
             nB = B[1][0] - (k*B[0][0])
 
             # Get end points of the whole picture that the satelite takes
-            p11 = QPointF((0 - nA)/k, 0)
+            p11 = QPointF((-1 - nA)/k, -1)
             p21 = QPointF((map_height - nA)/k, map_height)
-            p12 = QPointF((0 - nB)/k, 0)
+            p12 = QPointF((-1 - nB)/k, -1)
             p22 = QPointF((map_height - nB)/k, map_height)
 
             poly = QPolygonF()
             poly << p11 << p12 << p22 << p21 << p11
 
+            painter.setBrush(self.br_path)
+            painter.setPen(self.pen_path)
             painter.drawPolygon(poly)
+
+            rot = np.array([[np.cos(th), -np.sin(th), 0], [np.sin(th), np.cos(th), 0], [0, 0, 1]])
+            trans = np.array([[1, 0, A[0][0]], [0, 1, A[1][0]], [0, 0, 1]])
+            fTi = trans@rot
+            iTf = np.linalg.inv(fTi)
+
+            max_p = None
+            max_y = -np.inf
+
+            min_p = None
+            min_y = np.inf
+
+            for s in self.selections:
+                s_poly = QPolygonF()
+                for p in s:
+                    s_poly << p
+                s_poly << s[0]
+
+                i_poly = poly.intersected(s_poly)
+                if i_poly.isEmpty():
+                    continue
+
+                i = np.empty((3,0))
+                for p in i_poly:
+                    point = np.array([[p.x()], [p.y()], [1]])
+                    i = np.append(i, point, axis=1)
+
+                i = iTf@i
+
+                for j in range(i.shape[1]):
+                    if i[1][j] > max_y:
+                        max_y = i[1][j]
+                        max_p = i[:, j:j+1]
+                    if i[1][j] < min_y:
+                        min_y = i[1][j]
+                        min_p = i[:, j:j+1]
+
+            dt_max = max_y/sat_speed
+            dt_min = min_y/sat_speed
+
+            t_max = ts + dt_max
+            t_min = ts + dt_min
+            f.append((t_min, t_max))
+
+            B_trans = iTf@np.append(B, [1])
+
+            p11 = np.array([[0], [min_y], [1]])
+            p12 = np.array([[B_trans[0]], [min_y], [1]])
+            p21 = np.array([[0], [max_y], [1]])
+            p22 = np.array([[B_trans[0]], [max_y], [1]])
+
+            p11 = fTi@p11
+            p12 = fTi@p12
+            p21 = fTi@p21
+            p22 = fTi@p22
+
+            p11 = QPointF(p11[0,0], p11[1,0])
+            p12 = QPointF(p12[0,0], p12[1,0])
+            p21 = QPointF(p21[0,0], p21[1,0])
+            p22 = QPointF(p22[0,0], p22[1,0])
+
+            poly = QPolygonF()
+            poly << p11 << p12 << p22 << p21 << p11
+
+            painter.setBrush(self.br_covered)
+            painter.setPen(self.pen_covered)
+            painter.drawPolygon(poly)
+
+        if self.new_res:
+            self.res_window = ResultWindow(self.flights)
+            self.res_window.show()
+            self.new_res = False
+
+        
+
+
+class ResultWindow(QWidget):
+    def __init__(self, flights, *args, **kw):
+        super(ResultWindow, self).__init__(*args, **kw)
+        self.setWindowTitle("Optimization results")
+
+        self.res_layout = QBoxLayout(QBoxLayout.TopToBottom, self)
+        self.res_table = QTableWidget(len(flights),3)
+        self.res_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.res_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        self.res_table.setHorizontalHeaderLabels(["Start time", "End time", "Angle"])
+
+        start_list = []
+        end_list = []
+        angle_list = []
+
+        for i, f in enumerate(flights):
+            start_list.append(QTableWidgetItem(time.ctime(f[3][0])))
+            start_list[i].setFlags(Qt.ItemIsEnabled)
+            end_list.append(QTableWidgetItem(time.ctime(f[3][1])))
+            end_list[i].setFlags(Qt.ItemIsEnabled)
+            angle_list.append(QTableWidgetItem(str(f[2])+"°"))
+            angle_list[i].setFlags(Qt.ItemIsEnabled)
+
+            self.res_table.setItem(i, 0, start_list[i])
+            self.res_table.setItem(i, 1, end_list[i])
+            self.res_table.setItem(i, 2, angle_list[i])
+
+        
+        self.res_layout.addWidget(self.res_table)
+
+            
 
 
 
