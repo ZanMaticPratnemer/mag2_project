@@ -262,8 +262,7 @@ def cost(flights_, p):
     # Norm the sum with the maximum possible angle
     g = sum_g/p.gamma_max
 
-    # TODO: find a better norm
-    miss = sum(flights_miss) / (len(flights)*1500)
+    miss = sum(flights_miss)
 
     # Now both u and g are normalized to 1
 
@@ -271,7 +270,7 @@ def cost(flights_, p):
     # Now even if the smallest part of the areas is left uncovered, the cost will still be higher
     # than all areas being covered with the worst possible angle
     if u != 0:
-        cost = 1 + 10000*u + 1000*miss + g
+        cost = 1 + 10000*u + miss/10 + g
     else:
         cost = g
 
@@ -280,7 +279,7 @@ def cost(flights_, p):
     return (cost, u, miss)
 
 def getRandomValidFlight(flights_all, flights_curr):
-    candidates = copy.copy(flights_all)
+    candidates = copy.deepcopy(flights_all)
     while True:
         candidate = random.choice(candidates)
 

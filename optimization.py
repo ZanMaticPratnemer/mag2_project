@@ -4,9 +4,6 @@ import time
 import random
 import copy
 
-# TODO: remove after testing
-from PyQt5.QtCore import QPoint, QPointF
-
 class optParams(object):
     def __init__(self, r, th, f, h, a, g, next_pos, next_time):
         self.ranges = r
@@ -129,8 +126,6 @@ def optimize(p):
     T = 24/p.f * 60 * 60
     d_deg = 360/p.f
 
-    print("optimize")
-
     # Get a sufficent group of flights
     flights = [[p.next_pos, p.next_time]]
     next_time = p.next_time
@@ -144,7 +139,6 @@ def optimize(p):
         flights.append([next_pos, next_time])
 
     # Find out how many of those flights we need and with what parameters
-    print(flights)
 
     #########################
     ## Evolution algorithm ##
@@ -170,14 +164,14 @@ def optimize(p):
     ps = 1000
 
     # Flight mutation factor
-    fmf = 1
+    fmf = 0.5
 
     # Try to find a solution with n_min flights.
     # Then repeat untill we can cover the selected area
     n = n_min
     covered = False
 
-    max_itter = 500
+    max_itter = 1000
     
 
     while not covered:
@@ -219,11 +213,11 @@ def optimize(p):
                         min_cost = ind[1][0]
                         min_ind = ind
                 min_ind[0].sort(key=lambda f: f[1])
-                parents.append(min_ind)
+                parents.append(copy.deepcopy(min_ind))
             
             # Create a new population
             pop = []
-            parents_test=[a[0] for a in parents]
+            parents_test=[a[0] for a in copy.deepcopy(parents)]
 
             # Crossover
             if n != 1:
@@ -264,15 +258,28 @@ def optimize(p):
                         pop.append([c2, np.inf])
                         pop.append([c1, np.inf])
 
-            # pop_m = copy.deepcopy(pop)
             pop_m = []
+            
+
+            # Mildly mutate parents and add them to the population
+            pop_m = []
+            for ind in parents:
+                for k, f in enumerate(ind[0]):
+                    ind_m = copy.deepcopy(ind)
+                    ind_m[0][k][2] = f[2] + random.gauss(0, max(0.01, i*(0.01-2)/100+2))
+                    pop_m.append(ind_m)
+
+
+            pop = pop + pop_m
+
+            # Add current parents to the new population
+            # pop = pop + copy.deepcopy(parents)
 
             # Mutation
+            pop_m = []
             mutf = np.random.rand(ps-pn, n)
             for j, ind in enumerate(pop):
                 for k, f in enumerate(ind[0]):
-
-                    # Mutation of flights
                     if mutf[j][k] < fmf:
                         ind_m = copy.deepcopy(ind)
                         m = getRandomValidFlight(flights, ind[0])
@@ -280,20 +287,6 @@ def optimize(p):
                         ind_m[0][k][1] = m[1]
                         ind_m[0][k][2] = random.uniform(-p.gamma_max, p.gamma_max)
                         pop_m.append(ind_m)
-
-            pop = pop + pop_m
-
-            # Add current parents to the new population
-            pop = pop + parents
-
-            # Mildly mutate parents and add them to the population
-            pop_m = []
-            for ind in parents:
-                for k, f in enumerate(ind[0]):
-                    ind_m = copy.deepcopy(ind)
-                    ind_m[0][k][2] = f[2] + random.gauss(0, 0.01)
-                    pop_m.append(ind_m)
-
 
             pop = pop + pop_m
 
@@ -307,15 +300,15 @@ def optimize(p):
                 if ind[1][0] < min_cost:
                     min_cost = ind[1][0]
                     min_ind = ind
-            print(min_cost)
 
-            if prev_min == min_cost and min_ind[1][2] == 0:
+            if np.abs(prev_min - min_cost) < 0.0001:
                 end_cond = end_cond + 1
-                if end_cond == 50:
+                if end_cond == 25:
                     break
             else:
                 end_cond = 0
             prev_min = min_cost
+            print(i,min_cost)
 
 
 

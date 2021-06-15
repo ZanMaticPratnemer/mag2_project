@@ -143,6 +143,8 @@ class Map(QWidget):
         # Speed in internal coords/sec
         sat_speed = geoToInx(kmToLongitude(7.6) + x_n)
 
+        del_flight = None
+
         for f in self.flights:
             gamma = f[2]
             ts = f[1]
@@ -210,6 +212,10 @@ class Map(QWidget):
                         min_y = i[1][j]
                         min_p = i[:, j:j+1]
 
+            if min_y == np.inf:
+                del_flight = f
+
+
             dt_max = max_y/sat_speed
             dt_min = min_y/sat_speed
 
@@ -240,6 +246,9 @@ class Map(QWidget):
             painter.setBrush(self.br_covered)
             painter.setPen(self.pen_covered)
             painter.drawPolygon(poly)
+
+        if del_flight:
+            self.flights.pop(self.flights.index(del_flight))
 
         if self.new_res:
             self.res_window = ResultWindow(self.flights)
